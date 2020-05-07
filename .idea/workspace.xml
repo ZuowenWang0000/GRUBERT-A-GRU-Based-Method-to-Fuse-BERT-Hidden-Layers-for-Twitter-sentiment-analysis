@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="e55fbc94-8604-4073-872b-5daa417c59ce" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/twitter-datasets/glove_solution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build_vocab.sh" beforeDir="false" afterPath="$PROJECT_DIR$/twitter-datasets/build_vocab.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cooc.py" beforeDir="false" afterPath="$PROJECT_DIR$/twitter-datasets/cooc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cut_vocab.sh" beforeDir="false" afterPath="$PROJECT_DIR$/twitter-datasets/cut_vocab.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pickle_vocab.py" beforeDir="false" afterPath="$PROJECT_DIR$/twitter-datasets/pickle_vocab.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1ba1MZqSyoW1btJ9arvHRvNDu1s" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/twitter-datasets" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e55fbc94-8604-4073-872b-5daa417c59ce" name="Default Changelist" comment="" />
+      <created>1588855343051</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1588855343051</updated>
+      <workItem from="1588855348029" duration="988000" />
+      <workItem from="1588856337290" duration="151000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="1000" y="298" width="424" height="484" key="FileChooserDialogImpl" timestamp="1588856334189">
+      <screen x="0" y="27" width="1920" height="1053" />
+    </state>
+    <state x="1000" y="298" width="424" height="484" key="FileChooserDialogImpl/0.27.1920.1053@0.27.1920.1053" timestamp="1588856334189" />
+  </component>
+</project>
