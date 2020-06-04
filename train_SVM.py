@@ -1,0 +1,119 @@
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+import gensim
+from gensim import utils
+from nltk import word_tokenize
+from nltk import download
+from nltk.corpus import stopwords
+import sys
+from utils import *
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import SGDClassifier
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score
+import multiprocessing as mp
+
+# def avg_text_embedding(tokenized_text, embeddings_dict, embed_dim, vocab):
+def avg_text_embedding(embeddings_dict, embed_dim, vocab):
+    def avg_text_embedding_funtional(tokenized_text):
+        length = len(tokenized_text)
+        if length == 0:
+            # print("length = {}".format(length))
+            # print(tokenized_text)
+            return np.zeros(embed_dim)
+        sum = np.zeros(embed_dim)
+        for i in range(length):
+            if(tokenized_text[i] in vocab): #skip if it's out of vocabulary
+                sum += np.array(embeddings_dict[tokenized_text[i]])
+        return sum/length
+    return avg_text_embedding_funtional
+
+def build_avg_text_bedding_dataset(train_preprocessed_text, embeddings_dict, embed_dim, vocab):
+    dataset_size = len(train_preprocessed_text)
+    feature_np = np.zeros(shape=(dataset_size, embed_dim))
+
+    try:
+        cpus = mp.cpu_count()-2 # leave me 2 cores to browse youtube
+    except NotImplementedError:
+        cpus = 2  # arbitrary default
+
+    # for i in range(dataset_size):
+    #     feature_np[i] = avg_text_embedding(train_preprocessed_text[i], embeddings_dict, embed_dim, vocab)
+
+    pool = mp.Pool(processes=cpus)
+    f = avg_text_embedding(embeddings_dict, embed_dim, vocab)
+    feature_np = pool.map(f, train_preprocessed_text)
+    return feature_np
+
+
+
+def build_tokenized_dataset(raw_text, stop_words):
+    dataset_size = len(raw_text)
+    tokenized_dataset = []
+
+    for i in range(dataset_size):
+        tokenized_dataset.append(preprocess(raw_text[i], stop_words))
+    return tokenized_dataset
+
+def main():
+    print("running main")
+    """
+       load raw text, make dataset
+    """
+
+    try:
+        features_np = np.load('./dataset/features_np.npy')
+        labels = np.load('./temp_data/labels.npy')
+    except FileNotFoundError:
+        print("file not found, regenerating")
+        download('punkt')  # tokenizer, run once
+        download('stopwords')  # stopwords dictionary, run once
+        stop_words = stopwords.words('english')
+
+        pos_text, neg_text, vocab = load_train(train_on_full=True)
+        train = pos_text + neg_text
+        labels = make_labels(len(pos_text), len(neg_text))
+
+        assert len(train) == len(labels)
+
+        embeddings_dict = load_embedding(vocab, "./embedding/std_glove_embeddings.npz")
+
+        # print("embeddings_dict shape:{}".format(len(embeddings_dict)))
+        # print("query 'good' :{}".format(embeddings_dict['good']))
+        embed_dim = len(embeddings_dict['good'])
+        # print("original text:{}".format(pos_text[0]))
+        # print("return doc:{}".format(preprocess(pos_text[0], stop_words)))
+        #
+        # print("average embedding:{}".format(avg_text_embedding(preprocess(pos_text[0], stop_words), embeddings_dict, embed_dim, vocab)))
+
+        # tokenize and remove stop_words
+        tokenized_train = build_tokenized_dataset(train, stop_words)
+
+        # get the averaged embedding
+        features_np = build_avg_text_bedding_dataset(tokenized_train, embeddings_dict, embed_dim, vocab)
+        np.save('./temp_data/features_np', features_np)
+        np.save('./temp_data/labels', labels)
+
+    X_train, X_val, y_train, y_val  = train_test_split(
+        features_np, labels,
+        train_size=0.8, shuffle = True, random_state=1234)
+
+    print(X_train.shape)
+    print(y_train.shape)
+
+    model = SVC(C=1.0, kernel='rbf', degree=3, gamma='scale', coef0=0.0,
+                shrinking=True, probability=False, tol=0.001, cache_size=2000,
+                class_weight=None, verbose=True, max_iter=-1, decision_function_shape='ovo',
+                break_ties=False, random_state=None)
+    clf = make_pipeline(StandardScaler(), model)
+    clf.fit(X_train, y_train)
+    # scores = cross_val_score(clf, X_train, y_train, cv=5)
+    # print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+    print("validation set accuracy: {}".format(accuracy_score(y_val, clf.predict(X_val))))
+if __name__ == '__main__':
+    main()
