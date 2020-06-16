@@ -8,7 +8,7 @@ CFILES := main.m correct.m
 all: preprocess
 
 preprocess: $(CFILES)
-	$(CC) $(CFLAGS) $(CFILES) -o preprocess
+	$(CC) $(CFLAGS) $(CFILES) -o preprocess2
 
 clean:
 	rm -rf preprocess

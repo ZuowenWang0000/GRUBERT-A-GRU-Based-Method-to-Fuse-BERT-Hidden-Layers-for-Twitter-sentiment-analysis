@@ -81,6 +81,7 @@
         @"\\=": @"xxemotfrown",
         @"\\:": @"xxemotfrown"
     };
+    NSLog(@"initialized");
     return self;
 }
 
@@ -96,9 +97,12 @@
     // NSLog(@"%@", regex);
     char buf[281];
     NSString *prev = @"";
-    int limit = 1000;
+    int limit = 2000000;
     int i = 0;
     while (fgets(buf, 280, fp) != NULL && i++ < limit) {
+        if (i % 200 == 0) {
+            NSLog(@"tweets processed: %d", i);
+        }
         NSMutableString *str = [NSMutableString stringWithUTF8String:buf];
         if ([str compare:prev] == NSOrderedSame) {
             continue;
