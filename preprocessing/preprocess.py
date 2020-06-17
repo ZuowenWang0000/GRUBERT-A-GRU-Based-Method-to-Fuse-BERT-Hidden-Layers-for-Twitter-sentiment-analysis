@@ -1,9 +1,8 @@
 import re
-from fastai import *
-from fastai.text import *
 from autocorrect import Speller
 
-tweets = list(set(open("../../dataset/train_pos_full.txt", "r").readlines()))
+tweets = list(set(open("../../dataset/train_neg_full.txt", "r").readlines()))
+print(len(tweets))
 spell = Speller()
 fp = open("../../dataset/train_pos_full2.txt", "w")
 
@@ -74,17 +73,18 @@ emoticons = {
         "]:": "xxemotfrown",
         "{:": "xxemotsmile",
         "\\=": "xxemotfrown",
-        "\\:": "xxemotfrown"
+        "\\:": "xxemotfrown",
+        "<3": "xxemotheart"
 }
 
 for i in range(len(tweets)):
+    tweets[i] = spell(tweets[i])
     tweets[i] = tweets[i].strip()
     tweets[i] = re.sub("<user>", "xxuser", tweets[i])
     tweets[i] = re.sub("<url>", "xxurl", tweets[i])
     # tweets[i] = spec_add_spaces(rm_useless_spaces(tweets[i]))
     tweets[i] = re.sub("\\s+", " ", tweets[i])
     tweets[i] = tweets[i].replace("#", "# ")
-    tweets[i] = spell(tweets[i])
     tweets[i] = tweets[i].lower()
     for key in emoticons:
         tweets[i] = tweets[i].replace(key, emoticons[key])
