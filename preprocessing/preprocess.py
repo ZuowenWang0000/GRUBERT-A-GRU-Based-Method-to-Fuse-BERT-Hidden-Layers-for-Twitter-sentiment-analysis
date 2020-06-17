@@ -1,10 +1,13 @@
 import re
 from autocorrect import Speller
 
-tweets = list(set(open("../../dataset/train_neg_full.txt", "r").readlines()))
-print(len(tweets))
+start_index = int(input("start index\n"))
+end_index = int(input("end inex\n"))
+
+tweets = list(set(open("../../dataset/train_pos_full.txt", "r").readlines()))
+print("length of cleaned tweets {}".format(len(tweets)))
 spell = Speller()
-fp = open("../../dataset/train_pos_full2.txt", "w")
+fp = open("../dataset/train_pos_{}_{}.txt".format(start_index, end_index), "w")
 
 emoticons = {
         "=|": "xxemotneutral",
@@ -78,7 +81,12 @@ emoticons = {
 }
 
 for i in range(len(tweets)):
+<<<<<<< HEAD
     tweets[i] = spell(tweets[i])
+=======
+    if(i%1000 == 0):
+        print("iter {}".format(i))
+>>>>>>> 67c7b521ddc55fb9ef34e4cab7ff7c0a151d8bfb
     tweets[i] = tweets[i].strip()
     tweets[i] = re.sub("<user>", "xxuser", tweets[i])
     tweets[i] = re.sub("<url>", "xxurl", tweets[i])
