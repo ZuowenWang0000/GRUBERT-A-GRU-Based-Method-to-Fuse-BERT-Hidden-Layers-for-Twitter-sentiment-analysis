@@ -63,12 +63,12 @@ def main():
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
         model = AttentionNetwork(n_classes=n_classes,
-                                            vocab_size=len(word_map),
-                                            emb_sizes=[300],
-                                            word_rnn_size=word_rnn_size,
-                                            word_rnn_layers=word_rnn_layers,
-                                            word_att_size=word_att_size,
-                                            dropout=dropout)
+                                 emb_sizes=torch.Tensor([300]),
+                                 word_rnn_size=word_rnn_size,
+                                 word_rnn_layers=word_rnn_layers,
+                                 word_att_size=word_att_size,
+                                 dropout=dropout,
+                                 batch_size=batch_size)
         # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 
@@ -181,7 +181,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         labels = labels.squeeze(1).to(device)  # (batch_size)
 
         # Forward prop.
-        scores, word_alphas = model(embeddings)
+        scores, word_alphas, emb_weights = model(embeddings)
 
         # Loss
         loss = criterion(scores, labels)  # scalar

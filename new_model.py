@@ -6,18 +6,21 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 
 class AttentionNetwork(nn.Module):
-    def __init__(self, n_classes, emb_sizes, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5):
+    def __init__(self, n_classes, emb_sizes, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5, batch_size=64):
         super(AttentionNetwork, self).__init__()
-        self.word_attention = WordAttention(sum(emb_sizes), word_rnn_size, word_rnn_layers, word_att_size, dropout)
+        with torch.no_grad():
+            sum_sizes = torch.sum(emb_sizes)
+        self.word_attention = WordAttention(sum_sizes, word_rnn_size, word_rnn_layers, word_att_size, dropout)
         self.fc = nn.Linear(2 * word_rnn_size, n_classes)
         self.dropout = nn.Dropout(dropout)
+        self.emb_weights = torch.ones([sum_sizes, 1])
 
     def forward(self, embeddings):
-        # tweet_embedding = self.word_attention()  # TODO
-        # TEMP TEMP
+        # TODO embedding-wise weight control with mask
+        embeddings = self.emb_weights * embeddings  # element-wise multiplication
         sentence_embedding, word_alphas = self.word_attention(embeddings[0])
         score = self.fc(self.dropout(sentence_embedding))
-        return score, word_alphas
+        return score, word_alphas, self.emb_weights
 
 
 class WordAttention(LightningModule):
