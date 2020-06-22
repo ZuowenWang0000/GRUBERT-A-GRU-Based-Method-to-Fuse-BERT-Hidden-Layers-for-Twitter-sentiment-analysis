@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from new_model import AttentionNetwork
+from dataset import TweetsDataset
 
 # Model parameters
 n_classes = 2
@@ -18,10 +19,10 @@ fine_tune_word_embeddings = False  # fine-tune word embeddings?
 
 # Training parameters
 start_epoch = 0  # start at this epoch
-batch_size = 64  # batch size
+batch_size = 1  # batch size
 lr = 1e-3  # learning rate
 momentum = 0.9  # momentum
-workers = 4  # number of workers for loading data in the DataLoader
+workers = 1  # number of workers for loading data in the DataLoader
 epochs = 2  # number of epochs to run
 grad_clip = None  # clip gradients at this value
 print_freq = 2000  # print training or validation status every __ batches
@@ -63,7 +64,7 @@ def main():
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
         model = AttentionNetwork(n_classes=n_classes,
-                                 emb_sizes=torch.Tensor([300]),
+                                 emb_sizes_list=[50],
                                  word_rnn_size=word_rnn_size,
                                  word_rnn_layers=word_rnn_layers,
                                  word_att_size=word_att_size,
@@ -80,7 +81,7 @@ def main():
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(HANDataset(data_folder, 'train'), batch_size=batch_size, shuffle=True,
+    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset"), batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
     # Epochs
@@ -93,13 +94,13 @@ def main():
               epoch=epoch)
 
         # Decay learning rate every epoch
-        adjust_learning_rate(optimizer, 0.1)
+        adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
-        save_checkpoint(epoch, model, optimizer, word_map)
+        save_checkpoint(epoch, model, optimizer)
 
 
-def save_checkpoint(epoch, model, optimizer, word_map):
+def save_checkpoint(epoch, model, optimizer):
     """
     Save model checkpoint.
 
@@ -114,7 +115,8 @@ def save_checkpoint(epoch, model, optimizer, word_map):
     state = {'epoch': epoch,
              'model': model,
              'optimizer': optimizer,
-             'word_map': word_map}
+             # 'word_map': word_map
+             }
     filename = 'checkpoint_han.pth.tar'
     torch.save(state, filename)
 
@@ -173,18 +175,24 @@ def train(train_loader, model, criterion, optimizer, epoch):
     start = time.time()
 
     # Batches
-    for i, (embeddings, labels) in enumerate(train_loader):
+    for i, data in enumerate(train_loader):
 
+        embeddings = torch.tensor(data["embeddings"])
+        labels = torch.tensor(data["label"])
+        # print(embeddings)
+        # print(labels)
         data_time.update(time.time() - start)
 
         embeddings = embeddings.to(device)
-        labels = labels.squeeze(1).to(device)  # (batch_size)
+        # labels = labels.squeeze(1).to(device)  # (batch_size)
+        labels = labels.to(device)  # (batch_size)
 
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
-
+        print(scores)
+        print(scores.shape)
         # Loss
-        loss = criterion(scores, labels)  # scalar
+        loss = criterion(scores.to(device), labels)  # scalar
 
         # Back prop.
         optimizer.zero_grad()
