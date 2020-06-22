@@ -22,7 +22,7 @@ start_epoch = 0  # start at this epoch
 batch_size = 1  # batch size
 lr = 1e-3  # learning rate
 momentum = 0.9  # momentum
-workers = 1  # number of workers for loading data in the DataLoader
+workers = 4  # number of workers for loading data in the DataLoader
 epochs = 2  # number of epochs to run
 grad_clip = None  # clip gradients at this value
 print_freq = 2000  # print training or validation status every __ batches
@@ -69,7 +69,7 @@ def main():
                                  word_rnn_layers=word_rnn_layers,
                                  word_att_size=word_att_size,
                                  dropout=dropout,
-                                 batch_size=batch_size)
+                                 device=device)
         # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 

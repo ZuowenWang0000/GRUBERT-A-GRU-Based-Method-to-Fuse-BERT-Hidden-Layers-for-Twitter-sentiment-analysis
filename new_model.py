@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class AttentionNetwork(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5, batch_size=64):
+    def __init__(self, n_classes, emb_sizes_list, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5, device=None):
         super(AttentionNetwork, self).__init__()
         with torch.no_grad():
             sum_sizes = sum(emb_sizes_list)
@@ -10,7 +10,7 @@ class AttentionNetwork(nn.Module):
 
         self.fc = nn.Linear(2 * word_rnn_size, n_classes)
         self.dropout = nn.Dropout(dropout)
-        self.emb_weights = torch.autograd.Variable(torch.ones([sum_sizes])).cuda()
+        self.emb_weights = torch.autograd.Variable(torch.ones([sum_sizes])).to(device)
         self.sum_sizes = sum_sizes
 
     def forward(self, embeddings):
