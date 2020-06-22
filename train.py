@@ -28,7 +28,6 @@ def main(config, save_checkpoint_path, seed=None):
     # embedding parameters , the center of our study
     emb_sizes_list = config.embeddings.emb_sizes_list
 
-
     # Model parameters
     n_classes = config.model.n_classes
     word_rnn_size = config.model.word_rnn_size  # word RNN size
@@ -127,12 +126,10 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config):
         # embeddings = torch.tensor(data["embeddings"])
         embeddings = data["embeddings"]
         labels = data["label"]
+        embeddings = embeddings.to(device)
+        labels = labels.to(device)  # (batch_size)
 
         data_time.update(time.time() - start)
-
-        embeddings = embeddings.to(device)
-        # labels = labels.squeeze(1).to(device)  # (batch_size)
-        labels = labels.to(device)  # (batch_size)
 
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
