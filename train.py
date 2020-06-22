@@ -45,6 +45,7 @@ def main(config, save_checkpoint_path, seed=None):
     workers = config.training.workers  # number of workers for loading data in the DataLoader
     epochs = config.training.epochs  # number of epochs to run
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
+    save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
 
     cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
@@ -84,6 +85,7 @@ def main(config, save_checkpoint_path, seed=None):
 
     # Epochs
     for epoch in range(start_epoch, epochs):
+        epoch_start = time.time()
         # One epoch's training
         train(train_loader=train_loader,
               model=model,
@@ -97,7 +99,10 @@ def main(config, save_checkpoint_path, seed=None):
         adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
-        save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
+        if epoch % save_checkpoint_freq_epoch ==0:
+            save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
+        epoch_end = time.time()
+        print("per epoch time = {}".format(epoch_end-epoch_start))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config):

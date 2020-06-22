@@ -20,10 +20,11 @@
         "lr": 1e-3,
         "momentum": 0.9,
         "workers": 4,
-        "epochs": 2,
+        "epochs": 10,
         "grad_clip": "None",
         "print_freq": 2000,
-        "checkpoint": "None"
+        "checkpoint": "None",
+        "save_checkpoint_freq_epoch": 5
     }
 }
 
