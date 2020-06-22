@@ -1,0 +1,27 @@
+{
+    "model": {
+        "n_classes": 2,
+        "word_rnn_size": 50,
+        "sentence_rnn_size": 50,
+        "word_rnn_layers": 1,
+        "sentence_rnn_layers": 1,
+        "word_att_size": 100,
+        "sentence_att_size": 100,
+        "dropout": 0.3,
+        "fine_tune_word_embeddings": false,
+        "sentence_length_cut": 40
+    },
+    "training": {
+        "start_epoch": 0,
+        "batch_size": 64,
+        "lr": 1e-3,
+        "momentum": 0.9,
+        "workers": 4,
+        "epochs": 2,
+        "grad_clip": "None",
+        "print_freq": 2000,
+        "checkpoint": "None"
+    }
+}
+
+

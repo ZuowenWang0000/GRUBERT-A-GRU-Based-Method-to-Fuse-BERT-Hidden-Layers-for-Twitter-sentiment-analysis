@@ -5,61 +5,54 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from new_model import AttentionNetwork
 from dataset import TweetsDataset
-
-# Model parameters
-n_classes = 2
-word_rnn_size = 50  # word RNN size
-sentence_rnn_size = 50  # character RNN size
-word_rnn_layers = 1  # number of layers in character RNN
-sentence_rnn_layers = 1  # number of layers in word RNN
-word_att_size = 100  # size of the word-level attention layer (also the size of the word context vector)
-sentence_att_size = 100  # size of the sentence-level attention layer (also the size of the sentence context vector)
-dropout = 0.3  # dropout
-fine_tune_word_embeddings = False  # fine-tune word embeddings?
-sentence_length_cut = 40
-
-# Training parameters
-start_epoch = 0  # start at this epoch
-batch_size = 64  # batch size
-lr = 1e-3  # learning rate
-momentum = 0.9  # momentum
-workers = 4  # number of workers for loading data in the DataLoader
-epochs = 2  # number of epochs to run
-grad_clip = None  # clip gradients at this value
-print_freq = 2000  # print training or validation status every __ batches
-checkpoint = None  # path to model checkpoint, None if none
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
+from utils import *
+import json
+import click
+import os
+import copy
 
 
-def adjust_learning_rate(optimizer, scale_factor):
-    """
-    Shrinks learning rate by a specified factor.
-
-    :param optimizer: optimizer whose learning rates must be decayed
-    :param scale_factor: factor to scale by
-    """
-
-    print("\nDECAYING learning rate.")
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = param_group['lr'] * scale_factor
-    print("The new learning rate is %f\n" % (optimizer.param_groups[0]['lr'],))
-
-
-def main():
+def main(config, save_checkpoint_path, seed=None):
     """
     Training and validation.
     """
     global checkpoint, start_epoch
+    # get configs
+    config_dict = get_config(config)
+    config = config_to_namedtuple(config_dict)
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    print(config)
+    # Model parameters
+    n_classes = config.model.n_classes
+    word_rnn_size = config.model.word_rnn_size  # word RNN size
+    word_rnn_layers = config.model.word_rnn_layers  # number of layers in character RNN
+    word_att_size = config.model.word_att_size  # size of the word-level attention layer (also the size of the word context vector)
+    dropout = config.model.dropout  # dropout
+    fine_tune_word_embeddings = config.model.fine_tune_word_embeddings  # fine-tune word embeddings?
+    sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
+
+    # Training parameters
+    start_epoch = config.training.start_epoch  # start at this epoch
+    batch_size = config.training.batch_size  # batch size
+    lr = config.training.lr  # learning rate
+    momentum = config.training.momentum  # momentum
+    workers = config.training.workers  # number of workers for loading data in the DataLoader
+    epochs = config.training.epochs  # number of epochs to run
+    checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
+
+    cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialize model or load checkpoint
-    if checkpoint is not None:
+    if checkpoint!="None":
         checkpoint = torch.load(checkpoint)
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
-        word_map = checkpoint['word_map']
+        # word_map = checkpoint['word_map']
         start_epoch = checkpoint['epoch'] + 1
         print(
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
@@ -82,7 +75,7 @@ def main():
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "../dataset", sentence_length_cut = sentence_length_cut),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset", sentence_length_cut = sentence_length_cut),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
@@ -93,70 +86,18 @@ def main():
               model=model,
               criterion=criterion,
               optimizer=optimizer,
-              epoch=epoch)
+              epoch=epoch,
+              device=device,
+              config=config)
 
         # Decay learning rate every epoch
         adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
-        save_checkpoint(epoch, model, optimizer)
+        save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
 
 
-def save_checkpoint(epoch, model, optimizer):
-    """
-    Save model checkpoint.
-
-    :param epoch: epoch number
-    :param model: model
-    :param optimizer: optimizer
-    :param best_acc: best accuracy achieved so far (not necessarily in this checkpoint)
-    :param word_map: word map
-    :param epochs_since_improvement: number of epochs since last improvement
-    :param is_best: is this checkpoint the best so far?
-    """
-    state = {'epoch': epoch,
-             'model': model,
-             'optimizer': optimizer,
-             # 'word_map': word_map
-             }
-    filename = 'checkpoint_han.pth.tar'
-    torch.save(state, filename)
-
-
-def clip_gradient(optimizer, grad_clip):
-    """
-    Clip gradients computed during backpropagation to prevent gradient explosion.
-
-    :param optimizer: optimized with the gradients to be clipped
-    :param grad_clip: gradient clip value
-    """
-    for group in optimizer.param_groups:
-        for param in group['params']:
-            if param.grad is not None:
-                param.grad.data.clamp_(-grad_clip, grad_clip)
-
-class AverageMeter(object):
-    """
-    Keeps track of most recent, average, sum, and count of a metric.
-    """
-
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-        
-
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer, epoch, device, config):
     """
     Performs one epoch's training.
 
@@ -182,8 +123,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # embeddings = torch.tensor(data["embeddings"])
         embeddings = data["embeddings"]
         labels = data["label"]
-        # print(embeddings)
-        # print(labels)
+
         data_time.update(time.time() - start)
 
         embeddings = embeddings.to(device)
@@ -192,8 +132,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
-        print(scores)
-        print(scores.shape)
+
         # Loss
         loss = criterion(scores.to(device), labels)  # scalar
 
@@ -202,8 +141,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss.backward()
 
         # Clip gradients
-        if grad_clip is not None:
-            clip_gradient(optimizer, grad_clip)
+
+        if config.training.grad_clip!="None":
+            clip_gradient(optimizer, config.grad_clip)
 
         # Update
         optimizer.step()
@@ -221,7 +161,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         start = time.time()
 
         # Print training status
-        if i % print_freq == 0:
+        if i % config.training.print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
@@ -231,6 +171,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs))
 
+@click.command()
+@click.option('--config', default='configs/pipeline_check_glove.json', type=str)
+@click.option('--save-checkpoint-path', default='./log_dir/')
+@click.option('--seed', default=0, type=int)
+
+def main_cli(config, save_checkpoint_path, seed):
+    main(config, save_checkpoint_path, seed)
+
 
 if __name__ == '__main__':
-    main()
+    main_cli()

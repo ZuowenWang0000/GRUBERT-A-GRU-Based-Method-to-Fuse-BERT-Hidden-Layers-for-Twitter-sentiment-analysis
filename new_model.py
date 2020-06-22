@@ -15,13 +15,13 @@ class AttentionNetwork(nn.Module):
 
     def forward(self, embeddings):
         # TODO embedding-wise weight control with mask
-        print("shape of embeddings {}".format(embeddings.shape))
-        sentence_length = embeddings.shape[1]
+        # print("shape of embeddings {}".format(embeddings.shape))
+        # sentence_length = embeddings.shape[1]
         embeddings = torch.mul(self.emb_weights, embeddings)  # element-wise multiplication
         sentence_embedding, word_alphas = self.word_attention(embeddings)
         score = self.fc(self.dropout(sentence_embedding))
-        print("sentence embedding shape {}".format(sentence_embedding.shape))
-        print("score shape {}".format(score.shape))
+        # print("sentence embedding shape {}".format(sentence_embedding.shape))
+        # print("score shape {}".format(score.shape))
         return score, word_alphas, self.emb_weights
 
 
@@ -37,7 +37,7 @@ class WordAttention(nn.Module):
 
     def forward(self, combined_seq):
         combined_seq, _ = self.word_rnn(combined_seq.float())
-        print("combined seq :{}".format(combined_seq.shape))
+        # print("combined seq :{}".format(combined_seq.shape))
         att_w = self.word_attention(combined_seq.data)  # (n_words, att_size)
         att_w = torch.tanh(att_w)  # (n_words, att_size)
         # Take the dot-product of the attention vectors with the context vector (i.e. parameter of linear layer)
@@ -53,10 +53,10 @@ class WordAttention(nn.Module):
 
         # Calculate softmax values
         # word_alphas = att_w / torch.sum(att_w, dim=1, keepdim=True)  # (n_sentences, max(words_per_sentence))
-        print("word_alphas shape :{}".format(word_alphas.shape))
+        # print("word_alphas shape :{}".format(word_alphas.shape))
         # Find sentence embedding
         sentence = combined_seq * word_alphas  # (n_sentences, max(words_per_sentence), 2 * word_rnn_size)
-        print("sentence dim :{}".format(sentence.shape))
+        # print("sentence dim :{}".format(sentence.shape))
         sentence = sentence.sum(dim=1)  # (n_sentences, 2 * word_rnn_size)
-        print("sentence dim :{}".format(sentence.shape))
+        # print("sentence dim :{}".format(sentence.shape))
         return sentence, word_alphas
