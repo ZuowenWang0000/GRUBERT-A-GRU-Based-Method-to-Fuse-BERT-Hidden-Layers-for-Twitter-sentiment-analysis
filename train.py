@@ -25,6 +25,10 @@ def main(config, save_checkpoint_path, seed=None):
     np.random.seed(seed)
 
     print(config)
+    # embedding parameters , the center of our study
+    emb_sizes_list = config.embeddings.emb_sizes_list
+
+
     # Model parameters
     n_classes = config.model.n_classes
     word_rnn_size = config.model.word_rnn_size  # word RNN size
@@ -58,7 +62,7 @@ def main(config, save_checkpoint_path, seed=None):
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
         model = AttentionNetwork(n_classes=n_classes,
-                                 emb_sizes_list=[50],
+                                 emb_sizes_list=emb_sizes_list,
                                  word_rnn_size=word_rnn_size,
                                  word_rnn_layers=word_rnn_layers,
                                  word_att_size=word_att_size,

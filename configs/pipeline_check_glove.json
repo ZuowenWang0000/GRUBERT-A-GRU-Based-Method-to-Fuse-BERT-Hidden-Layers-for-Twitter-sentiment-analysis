@@ -1,4 +1,7 @@
 {
+    "embeddings": {
+        "emb_sizes_list": [300]
+    },
     "model": {
         "n_classes": 2,
         "word_rnn_size": 50,

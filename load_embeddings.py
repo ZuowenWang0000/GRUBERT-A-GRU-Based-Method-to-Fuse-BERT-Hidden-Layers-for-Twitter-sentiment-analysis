@@ -18,8 +18,9 @@ def get_glove_embedding(data_path):
                 format='csv',
                 skip_header=True,
                 fields=data_fields_glove)
-
-    text_field_glove.build_vocab(train_glove, vectors='glove.6B.50d')
+    glove_type = 'glove.6B.300d'
+    print("**************USING GLOVE TYPE: {} ****************".format(glove_type))
+    text_field_glove.build_vocab(train_glove, vectors=glove_type)
     return text_field_glove.vocab
     # return text_field_glove.vocab.vectors
 
