@@ -46,6 +46,6 @@ class TweetsDataset(Dataset):
             embeddings[0:sentence_length] = embeddings_temp
 
         # return {"embeddings": torch.tensor(embeddings), "labels": torch.tensor(labels)}
-        return {"embeddings": embeddings,
-                "label": int(label)}
+        return {"embeddings": torch.tensor(embeddings).type(torch.FloatTensor),
+                "label": torch.tensor(int(label))}
 

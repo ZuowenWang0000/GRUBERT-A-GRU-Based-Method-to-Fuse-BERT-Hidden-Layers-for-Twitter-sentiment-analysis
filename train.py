@@ -82,7 +82,7 @@ def main():
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset", sentence_length_cut = sentence_length_cut),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "../dataset", sentence_length_cut = sentence_length_cut),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
@@ -179,8 +179,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # Batches
     for i, data in enumerate(train_loader):
 
-        embeddings = torch.tensor(data["embeddings"])
-        labels = torch.tensor(data["label"])
+        # embeddings = torch.tensor(data["embeddings"])
+        embeddings = data["embeddings"]
+        labels = data["label"]
         # print(embeddings)
         # print(labels)
         data_time.update(time.time() - start)

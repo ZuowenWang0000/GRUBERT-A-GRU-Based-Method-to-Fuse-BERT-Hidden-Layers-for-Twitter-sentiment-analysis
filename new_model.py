@@ -36,7 +36,7 @@ class WordAttention(nn.Module):
         self.softmax = nn.Softmax(dim = 1)
 
     def forward(self, combined_seq):
-        combined_seq, _ = self.word_rnn(combined_seq)
+        combined_seq, _ = self.word_rnn(combined_seq.float())
         print("combined seq :{}".format(combined_seq.shape))
         att_w = self.word_attention(combined_seq.data)  # (n_words, att_size)
         att_w = torch.tanh(att_w)  # (n_words, att_size)
