@@ -5,68 +5,23 @@ from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 
-class AttentionNetwork(LightningModule):
-    def __init__(self, train_dataloader, test_dataloader, n_classes, vocab_size, emb_size, word_rnn_size, word_rnn_layers, word_att_size, classifier_size, dropout=0.5):
+class AttentionNetwork(nn.Module):
+    def __init__(self, n_classes, emb_sizes, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5):
         super(AttentionNetwork, self).__init__()
-        self.train_dataloader = train_dataloader
-        self.test_dataloader = test_dataloader
-        self.word_attention = WordAttention(vocab_size, emb_size, word_rnn_size, word_rnn_layers, word_att_size, dropout)
+        self.word_attention = WordAttention(sum(emb_sizes), word_rnn_size, word_rnn_layers, word_att_size, dropout)
         self.fc = nn.Linear(2 * word_rnn_size, n_classes)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, glove_seq, syngcn_seq, elmo_seq):
+    def forward(self, embeddings):
         # tweet_embedding = self.word_attention()  # TODO
         # TEMP TEMP
-        sentence_embedding, word_alphas = self.word_attention(glove_seq)
+        sentence_embedding, word_alphas = self.word_attention(embeddings[0])
         score = self.fc(self.dropout(sentence_embedding))
         return score, word_alphas
 
-    def train_dataloader(self):
-        return self.train_dataloader
-
-    def test_dataloader(self):
-        return self.test_dataloader
-
-    def configure_optimizers(self):
-        return Adam(self.parameters(), lr=0.001)
-
-    def training_step(self, batch, batch_idx):
-        x, y = batch.text[0].T, batch.label
-        y_hat = self(x)
-        loss = self.loss_function(y_hat, y)
-
-        # calculate accuracy for batch
-        _, predicted = torch.max(y_hat,1)
-        accuracy = (predicted == y).sum().type(torch.DoubleTensor) / len(y)
-
-
-        tensorboard_logs = {'train_loss': loss,'train_accuracy':accuracy}
-        return {'loss': loss, 'log': tensorboard_logs}
-
-    def validation_step(self, batch, batch_idx):
-        x, y = batch.text[0].T, batch.label
-        y_hat = self(x)
-        loss = self.loss_function(y_hat, y)
-        
-        # calculate accuracy for batch
-        _, predicted = torch.max(y_hat,1)
-        accuracy = (predicted == y).sum().type(torch.DoubleTensor) / len(y)
-
-        tensorboard_logs = {'val_loss': loss, 'val_acc':accuracy}
-        return {'val_loss': loss,'val_acc':accuracy, 'log':tensorboard_logs}
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
-
-        return {
-          'val_loss': avg_loss,
-          'val_acc': avg_acc, 
-          'progress_bar':{'val_loss': avg_loss, 'val_acc': avg_acc }}
-
 
 class WordAttention(LightningModule):
-    def __init__(self, vocab_size, emb_size, word_rnn_size, word_rnn_layers, word_att_size, dropout):
+    def __init__(self, emb_size, word_rnn_size, word_rnn_layers, word_att_size, dropout):
         super(WordAttention, self).__init__()
         self.word_rnn = nn.GRU(emb_size, word_rnn_size, num_layers=word_rnn_layers, bidirectional=True,
                                dropout=dropout, batch_first=True)
