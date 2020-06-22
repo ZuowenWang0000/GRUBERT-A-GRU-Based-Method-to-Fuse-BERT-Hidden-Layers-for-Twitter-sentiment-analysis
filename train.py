@@ -16,10 +16,11 @@ word_att_size = 100  # size of the word-level attention layer (also the size of 
 sentence_att_size = 100  # size of the sentence-level attention layer (also the size of the sentence context vector)
 dropout = 0.3  # dropout
 fine_tune_word_embeddings = False  # fine-tune word embeddings?
+sentence_length_cut = 40
 
 # Training parameters
 start_epoch = 0  # start at this epoch
-batch_size = 1  # batch size
+batch_size = 64  # batch size
 lr = 1e-3  # learning rate
 momentum = 0.9  # momentum
 workers = 4  # number of workers for loading data in the DataLoader
@@ -81,7 +82,8 @@ def main():
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset"), batch_size=batch_size, shuffle=True,
+    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset", sentence_length_cut = sentence_length_cut),
+                                               batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
     # Epochs
