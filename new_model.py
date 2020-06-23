@@ -10,14 +10,26 @@ class AttentionNetwork(nn.Module):
 
         self.fc = nn.Linear(2 * word_rnn_size, n_classes)
         self.dropout = nn.Dropout(dropout)
-        self.emb_weights = torch.autograd.Variable(torch.ones([sum_sizes])).to(device)
+        self.emb_weights = torch.nn.Parameter(torch.ones([sum_sizes], requires_grad=True))
+
+        # self.emb_weights = nn.Linear(sum_sizes, sum_sizes)
         self.sum_sizes = sum_sizes
+        self.counter = 0
 
     def forward(self, embeddings):
         # TODO embedding-wise weight control with mask
         # print("shape of embeddings {}".format(embeddings.shape))
         # sentence_length = embeddings.shape[1]
+        # self.emb_weights = torch.relu(self.emb_weights)
+
         embeddings = torch.mul(self.emb_weights, embeddings)  # element-wise multiplication
+        # embeddings = self.emb_weights(embeddings)
+        # if self.counter % 128 == 0:
+        #     print(embeddings.grad_fn)
+        #     print("embedding weights: {}".format(self.emb_weights[0:10]))
+            # for param in self.emb_weights.parameters():
+            #     print(param.data)
+        self.counter += 1
         sentence_embedding, word_alphas = self.word_attention(embeddings)
         score = self.fc(self.dropout(sentence_embedding))
         # print("sentence embedding shape {}".format(sentence_embedding.shape))

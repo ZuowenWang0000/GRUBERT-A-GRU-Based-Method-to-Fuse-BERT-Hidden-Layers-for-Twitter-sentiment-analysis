@@ -10,7 +10,7 @@ import json
 import click
 import os
 import copy
-
+from test import test
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -46,6 +46,7 @@ def main(config, save_checkpoint_path, seed=None):
     epochs = config.training.epochs  # number of epochs to run
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
+    train_without_val = config.training.train_without_val
 
     cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
@@ -82,8 +83,14 @@ def main(config, save_checkpoint_path, seed=None):
     train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset", sentence_length_cut = sentence_length_cut),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
+    #    validation
+    val_loader = torch.utils.data.DataLoader(
+        TweetsDataset("val_small_split.csv", "./dataset", sentence_length_cut=sentence_length_cut),
+        batch_size=batch_size, shuffle=False,
+        num_workers=workers, pin_memory=True)
 
     # Epochs
+    train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
         epoch_start = time.time()
         # One epoch's training
@@ -99,10 +106,17 @@ def main(config, save_checkpoint_path, seed=None):
         adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
-        if epoch % save_checkpoint_freq_epoch ==0:
+        if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
+            if not train_without_val:
+                test(val_loader, model, criterion, device, config)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
+
+    train_end_time = time.time()
+    print("Total training time : {} minutes".format((train_end_time-train_start_time)/60.0))
+
+    test(val_loader, model, criterion, device, config)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config):
@@ -139,12 +153,21 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config):
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
-        # Loss
-        loss = criterion(scores.to(device), labels)  # scalar
+        if config.embeddings.use_regularization == "none":
+            loss = criterion(scores.to(device), labels)
+        elif config.embeddings.use_regularization == "l1":
+            # Regularization on embedding weights
+            emb_weights_norm = torch.norm(model.emb_weights, p=1)
+            # Loss
+            loss = criterion(scores.to(device), labels) + config.embeddings.l1_lambda * emb_weights_norm  # scalar
+        else:
+            raise NotImplementedError
 
         # Back prop.
         optimizer.zero_grad()
         loss.backward()
+
+        # print(model.emb_weights.grad)
 
         # Clip gradients
 
