@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-from new_model import AttentionNetwork
+from attention_network import AttentionNetwork
+from lstm_model import LstmModel
 from dataset import TweetsDataset
 from utils import *
 import json
@@ -62,7 +63,8 @@ def main(config, save_checkpoint_path, seed=None):
         print(
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
-        model = AttentionNetwork(n_classes=n_classes,
+        # model = AttentionNetwork(n_classes=n_classes,
+        model = LstmModel(n_classes=n_classes,
                                  emb_sizes_list=emb_sizes_list,
                                  word_rnn_size=word_rnn_size,
                                  word_rnn_layers=word_rnn_layers,
@@ -80,12 +82,12 @@ def main(config, save_checkpoint_path, seed=None):
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "./dataset", sentence_length_cut = sentence_length_cut),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "../dataset", sentence_length_cut = sentence_length_cut),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
     val_loader = torch.utils.data.DataLoader(
-        TweetsDataset("val_small_split.csv", "./dataset", sentence_length_cut=sentence_length_cut),
+        TweetsDataset("val_small_split.csv", "../dataset", sentence_length_cut=sentence_length_cut),
         batch_size=batch_size, shuffle=False,
         num_workers=workers, pin_memory=True)
 
@@ -103,7 +105,7 @@ def main(config, save_checkpoint_path, seed=None):
               config=config)
 
         # Decay learning rate every epoch
-        adjust_learning_rate(optimizer, 0.9)
+        adjust_learning_rate(optimizer, 0.999)
 
         # Save checkpoint
         if epoch % save_checkpoint_freq_epoch == 0:

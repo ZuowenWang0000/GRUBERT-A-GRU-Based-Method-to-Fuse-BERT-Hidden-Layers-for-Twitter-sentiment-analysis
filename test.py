@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-from new_model import AttentionNetwork
+from attention_network import AttentionNetwork
 from dataset import TweetsDataset
 from utils import *
 import json

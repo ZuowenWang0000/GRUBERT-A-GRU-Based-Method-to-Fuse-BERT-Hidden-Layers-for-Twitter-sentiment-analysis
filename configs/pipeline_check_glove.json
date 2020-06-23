@@ -19,7 +19,7 @@
         "lr": 1e-3,
         "momentum": 0.9,
         "workers": 4,
-        "epochs": 5,
+        "epochs": 20,
         "grad_clip": "None",
         "print_freq": 2000,
         "checkpoint": "None",
