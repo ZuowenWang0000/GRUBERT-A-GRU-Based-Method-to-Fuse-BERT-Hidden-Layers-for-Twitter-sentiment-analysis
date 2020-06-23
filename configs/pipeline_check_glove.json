@@ -7,11 +7,8 @@
     "model": {
         "n_classes": 2,
         "word_rnn_size": 50,
-        "sentence_rnn_size": 50,
         "word_rnn_layers": 1,
-        "sentence_rnn_layers": 1,
         "word_att_size": 100,
-        "sentence_att_size": 100,
         "dropout": 0.3,
         "fine_tune_word_embeddings": false,
         "sentence_length_cut": 40
