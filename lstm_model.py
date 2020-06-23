@@ -9,8 +9,8 @@ class LstmModel(nn.Module):
         self.lin = nn.Linear(2*word_rnn_size, n_classes)
     
     def forward(self, embeddings):
-        x, _ = self.lstm(embeddings)
-        x = F.relu(x)
+        x, _ = self.lstm(embeddings.permute(1, 0, 2))
+        x = F.relu(x.permute(1, 0, 2))
         x = self.lin(x)
         x = x.sum(dim=1)
         return x, None, None
