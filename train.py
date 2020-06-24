@@ -218,7 +218,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config):
                                                                   acc=accs))
 
 @click.command()
-@click.option('--config', default='configs/pipeline_check_glove.json', type=str)
+@click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
 @click.option('--save-checkpoint-path', default='./log_dir/')
 @click.option('--seed', default=0, type=int)
 
