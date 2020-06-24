@@ -43,7 +43,8 @@ class TweetsDataset(Dataset):
         #     embeddings = np.zeros([self.sentence_length_cut, embedding_dim])
         #     embeddings[0:sentence_length] = embeddings_temp
 
-        embeddings = self.embedding_lookup.vocab.vectors[self.dataset.fields["text"].process([self.dataset[idx].text])]
+        embeddings = self.embedding_lookup.vocab.vectors[self.dataset.fields["text"].process([self.dataset[idx].text])[0].T].squeeze(0)
+        # print(embeddings)
         label = self.dataset[idx].label
 
         # return {"embeddings": torch.tensor(embeddings), "labels": torch.tensor(labels)}

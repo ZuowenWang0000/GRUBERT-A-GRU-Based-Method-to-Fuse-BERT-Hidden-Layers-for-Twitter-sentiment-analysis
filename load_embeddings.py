@@ -30,20 +30,23 @@ class GloveEmbedding:
         glove_type = 'glove.6B.300d'
         print("**************USING GLOVE TYPE: {} ****************".format(glove_type))
         self.text_field_glove.build_vocab(self.train_glove, vectors=glove_type)
-        # train_iter, valid_iter = BucketIterator.splits(
-        #     (train_glove, valid_glove), 
-        #     batch_sizes=(1,1), 
-        #     device=None,
-        #     sort_key=lambda x: len(x.text), # the BucketIterator needs to be told what function it should use to group the data.
-        #     sort_within_batch=True,
-        # )
-        # print(train_glove.fields["text"].process([train_glove[0].text]))
-        # print(train_glove[0])
+        train_iter, valid_iter = BucketIterator.splits(
+            (self.train_glove, self.valid_glove), 
+            batch_sizes=(1,1), 
+            device=None,
+            sort_key=lambda x: len(x.text), # the BucketIterator needs to be told what function it should use to group the data.
+            sort_within_batch=True,
+        )
+        # print(self.train_glove.fields["text"].process([self.train_glove[0].text]))
+        # print(self.train_glove[0])
         # # print([x.text[0] for x in train_iter])
         # print(next(iter(train_iter)).text)
-        # print(text_field_glove.vocab.itos[1])
-        # print(text_field_glove.vocab.vectors[1])
-        # print(train_glove[0].label)
+        # print(self.text_field_glove.vocab.itos[1])
+        # temp = self.text_field_glove.vocab.vectors[self.train_glove.fields["text"].process([self.train_glove[0].text])[0].T]
+        # temp = temp.squeeze(0)
+        # print(temp)
+        # print(temp.shape)
+        # print(self.train_glove[0].label)
         # to_return = train_glove if train_or_test == "train" else valid_glove
         # return text_field_glove, to_return 
 
