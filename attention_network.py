@@ -48,8 +48,10 @@ class WordAttention(nn.Module):
         self.softmax = nn.Softmax(dim = 1)
 
     def forward(self, combined_seq):
-        combined_seq, _ = self.word_rnn(combined_seq.float())
-        # print("combined seq :{}".format(combined_seq.shape))
+        print("combined seq :{}".format(combined_seq.shape))
+        combined_seq, _ = self.word_rnn(combined_seq.float().permute(1, 0, 2))
+        print("combined seq :{}".format(combined_seq.shape))
+        combined_seq = combined_seq.permute(1, 0, 2)
         att_w = self.word_attention(combined_seq.data)  # (n_words, att_size)
         att_w = torch.tanh(att_w)  # (n_words, att_size)
         # Take the dot-product of the attention vectors with the context vector (i.e. parameter of linear layer)
