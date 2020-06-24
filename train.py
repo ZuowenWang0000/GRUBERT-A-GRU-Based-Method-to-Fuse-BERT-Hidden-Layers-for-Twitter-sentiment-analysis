@@ -13,6 +13,7 @@ import os
 import copy
 from test import test
 from load_embeddings import GloveEmbedding
+from torch.utils.tensorboard import SummaryWriter
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -32,8 +33,10 @@ def main(config, save_checkpoint_path, seed=None):
 
     # Model parameters
     if config.model.architecture == "attention":
+        print("using attention model")
         model_type = AttentionNetwork
     elif config.model.architecture == "lstm":
+        print("using lstm model")
         model_type = LstmModel
     else:
         raise NotImplementedError
@@ -106,6 +109,11 @@ def main(config, save_checkpoint_path, seed=None):
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
+    # set up tensorboard writer
+    writer = SummaryWriter(os.path.join(save_checkpoint_path, 'checkpoint_tf_board'))
+
+    # writer.add_graph(model)
+
     # Epochs
     train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
@@ -117,26 +125,28 @@ def main(config, save_checkpoint_path, seed=None):
               optimizer=optimizer,
               epoch=epoch,
               device=device,
-              config=config)
+              config=config,
+              tf_writer=writer)
 
         # Decay learning rate every epoch
-        adjust_learning_rate(optimizer, 0.999)
+        adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
         if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
             if not train_without_val:
-                test(val_loader, model, criterion, device, config)
+                test(val_loader, model, criterion, device, config, writer, epoch)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
 
     train_end_time = time.time()
     print("Total training time : {} minutes".format((train_end_time-train_start_time)/60.0))
 
-    test(val_loader, model, criterion, device, config)
+    print("Final evaluation:")
+    test(val_loader, model, criterion, device, config, writer, epoch)
 
 
-def train(train_loader, model, criterion, optimizer, epoch, device, config):
+def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer):
     """
     Performs one epoch's training.
 
@@ -216,6 +226,12 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config):
                                                                   batch_time=batch_time,
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs))
+    # ...log the running loss, accuracy
+    tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
+    tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
+    tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
+
+
 
 @click.command()
 @click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
