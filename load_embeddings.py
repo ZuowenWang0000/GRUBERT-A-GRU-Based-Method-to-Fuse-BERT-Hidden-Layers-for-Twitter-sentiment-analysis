@@ -1,28 +1,60 @@
 import torchtext.vocab as vocab
 from torchtext.data import Field
 from torchtext.data import TabularDataset
+from torchtext.data import BucketIterator
 import os
 
 def tokenize(x):
     return x.split()
 
-def get_glove_embedding(data_path):
-    text_field_glove = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length=40)
-    label_field_glove = Field(sequential=False, use_vocab=False)
+class GloveEmbedding:
+    def __init__(self, data_path, train_csv_file, test_csv_file, sentence_length_cut):
+        self.data_path = data_path
+        self.train_csv_file = train_csv_file
+        self.test_csv_file = test_csv_file
+        self.sentence_length_cut = sentence_length_cut
+        self.initialize_embeddings()
 
-    data_fields_glove = [("text", text_field_glove), ("label", label_field_glove)]
+    def initialize_embeddings(self):
+        self.text_field_glove = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length=self.sentence_length_cut)
+        label_field_glove = Field(sequential=False, use_vocab=False)
 
-    train_glove, valid_glove = TabularDataset.splits(
-                path=data_path,
-                train='train_small_split.csv', validation="val_small_split.csv",
-                format='csv',
-                skip_header=True,
-                fields=data_fields_glove)
-    glove_type = 'glove.6B.300d'
-    print("**************USING GLOVE TYPE: {} ****************".format(glove_type))
-    text_field_glove.build_vocab(train_glove, vectors=glove_type)
-    return text_field_glove.vocab
-    # return text_field_glove.vocab.vectors
+        data_fields_glove = [("text", self.text_field_glove), ("label", label_field_glove)]
+
+        self.train_glove, self.valid_glove = TabularDataset.splits(
+                    path=self.data_path,
+                    train=self.train_csv_file, validation=self.test_csv_file,
+                    format='csv',
+                    skip_header=True,
+                    fields=data_fields_glove)
+        glove_type = 'glove.6B.300d'
+        print("**************USING GLOVE TYPE: {} ****************".format(glove_type))
+        self.text_field_glove.build_vocab(self.train_glove, vectors=glove_type)
+        # train_iter, valid_iter = BucketIterator.splits(
+        #     (train_glove, valid_glove), 
+        #     batch_sizes=(1,1), 
+        #     device=None,
+        #     sort_key=lambda x: len(x.text), # the BucketIterator needs to be told what function it should use to group the data.
+        #     sort_within_batch=True,
+        # )
+        # print(train_glove.fields["text"].process([train_glove[0].text]))
+        # print(train_glove[0])
+        # # print([x.text[0] for x in train_iter])
+        # print(next(iter(train_iter)).text)
+        # print(text_field_glove.vocab.itos[1])
+        # print(text_field_glove.vocab.vectors[1])
+        # print(train_glove[0].label)
+        # to_return = train_glove if train_or_test == "train" else valid_glove
+        # return text_field_glove, to_return 
+
+    def tokenize(self, x):
+        return x.split()
+
+    def get_train_set(self):
+        return self.text_field_glove, self.train_glove
+
+    def get_test_set(self):
+        return self.text_field_glove, self.valid_glove
 
 def get_syngcn_embedding(data_path, syngcn_path):
     text_field_synGCN = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length = 40)

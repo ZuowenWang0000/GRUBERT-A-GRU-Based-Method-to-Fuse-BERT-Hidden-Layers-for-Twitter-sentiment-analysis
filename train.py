@@ -12,6 +12,7 @@ import click
 import os
 import copy
 from test import test
+from load_embeddings import GloveEmbedding
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -94,15 +95,16 @@ def main(config, save_checkpoint_path, seed=None):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
+
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset(train_file_path, dataset_path, sentence_length_cut = sentence_length_cut),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set()),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
-    val_loader = torch.utils.data.DataLoader(
-        TweetsDataset(val_file_path, dataset_path, sentence_length_cut=sentence_length_cut),
-        batch_size=batch_size, shuffle=False,
-        num_workers=workers, pin_memory=True)
+    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set()),
+                                               batch_size=batch_size, shuffle=True,
+                                               num_workers=workers, pin_memory=True)
 
     # Epochs
     train_start_time = time.time()
