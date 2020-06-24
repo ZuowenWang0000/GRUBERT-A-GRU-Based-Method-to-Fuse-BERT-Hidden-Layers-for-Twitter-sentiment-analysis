@@ -49,7 +49,6 @@ def test(eval_loader, model, criterion, device, config):
         accs.update(accuracy, labels.size(0))
 
         # Print eval status
-        if i % config.training.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
+    print('Evaluation:\t'
                   'Eval Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Eval Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(0, i, len(eval_loader), loss=losses, acc=accs))
+                  'Eval Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(loss=losses, acc=accs))
