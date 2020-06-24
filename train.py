@@ -12,7 +12,7 @@ import click
 import os
 import copy
 from test import test
-from load_embeddings import GloveEmbedding
+from load_embeddings import GloveEmbedding, SynGcnEmbedding
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -96,13 +96,14 @@ def main(config, save_checkpoint_path, seed=None):
     criterion = criterion.to(device)
 
     glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
+    syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set()),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
-    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set()),
+    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 

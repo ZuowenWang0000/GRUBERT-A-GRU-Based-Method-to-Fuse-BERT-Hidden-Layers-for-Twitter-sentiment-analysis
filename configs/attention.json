@@ -1,6 +1,6 @@
 {
     "embeddings": {
-        "emb_sizes_list": [300],
+        "emb_sizes_list": [300, 300],
         "use_regularization": "none",
         "l1_lambda": 0.0001
     },
