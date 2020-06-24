@@ -5,6 +5,7 @@
         "l1_lambda": 0.0001
     },
     "model": {
+        "architecture": "attention",
         "n_classes": 2,
         "word_rnn_size": 50,
         "word_rnn_layers": 1,
@@ -25,6 +26,12 @@
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 5,
         "train_without_val": false
+    },
+    "dataset": {
+        "dataset_dir": "./dataset",
+        "rel_train_path": "train_small_split.csv",
+        "rel_val_path": "val_small_split.csv",
+        "rel_test_path": "test_small_split.csv"
     }
 }
 

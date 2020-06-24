@@ -30,6 +30,12 @@ def main(config, save_checkpoint_path, seed=None):
     emb_sizes_list = config.embeddings.emb_sizes_list
 
     # Model parameters
+    if config.model.architecture == "attention":
+        model_type = AttentionNetwork
+    elif config.model.architecture == "lstm":
+        model_type = LstmModel
+    else:
+        raise NotImplementedError
     n_classes = config.model.n_classes
     word_rnn_size = config.model.word_rnn_size  # word RNN size
     word_rnn_layers = config.model.word_rnn_layers  # number of layers in character RNN
@@ -49,7 +55,14 @@ def main(config, save_checkpoint_path, seed=None):
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
 
+    # Dataset parameters
+    dataset_path = config.dataset.dataset_dir
+    train_file_path = config.dataset.rel_train_path
+    val_file_path = config.dataset.rel_val_path
+    test_file_path = config.dataset.rel_test_path
+
     cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
+
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -63,14 +76,14 @@ def main(config, save_checkpoint_path, seed=None):
         print(
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
-        # model = AttentionNetwork(n_classes=n_classes,
-        model = LstmModel(n_classes=n_classes,
+        model = model_type(n_classes=n_classes,
                                  emb_sizes_list=emb_sizes_list,
                                  word_rnn_size=word_rnn_size,
                                  word_rnn_layers=word_rnn_layers,
                                  word_att_size=word_att_size,
                                  dropout=dropout,
                                  device=device)
+
         # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
 
@@ -82,12 +95,12 @@ def main(config, save_checkpoint_path, seed=None):
     criterion = criterion.to(device)
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset("train_small_split.csv", "../dataset", sentence_length_cut = sentence_length_cut),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset(train_file_path, dataset_path, sentence_length_cut = sentence_length_cut),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
     val_loader = torch.utils.data.DataLoader(
-        TweetsDataset("val_small_split.csv", "../dataset", sentence_length_cut=sentence_length_cut),
+        TweetsDataset(val_file_path, dataset_path, sentence_length_cut=sentence_length_cut),
         batch_size=batch_size, shuffle=False,
         num_workers=workers, pin_memory=True)
 
