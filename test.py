@@ -6,13 +6,14 @@ import torch.optim as optim
 from attention_network import AttentionNetwork
 from dataset import TweetsDataset
 from utils import *
+from torch.utils.tensorboard import SummaryWriter
 import json
 import click
 import os
 import copy
 
 
-def test(eval_loader, model, criterion, device, config):
+def test(eval_loader, model, criterion, device, config, tf_writer, epoch):
     """
     Performs one epoch's training.
 
@@ -52,3 +53,7 @@ def test(eval_loader, model, criterion, device, config):
     print('Evaluation:\t'
                   'Eval Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Eval Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(loss=losses, acc=accs))
+
+    # ...log the running loss, accuracy
+    tf_writer.add_scalar('test loss (avg. epoch)', losses.avg, epoch)
+    tf_writer.add_scalar('test accuracy (avg. epoch)', accs.avg, epoch)
