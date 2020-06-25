@@ -14,8 +14,9 @@ import copy
 from test import test
 from load_embeddings import *
 from torch.utils.tensorboard import SummaryWriter
+import tensorflow_hub as hub
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import tensorflow as tf
 
 def main(config, save_checkpoint_path, seed=None):
@@ -102,22 +103,27 @@ def main(config, save_checkpoint_path, seed=None):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    words_to_embed = "dog cat sloth"  # <-- it's a list now, and the name changed
+
+    elmo = hub.Module("https://tfhub.dev/google/elmo/3")
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
-    elmo_embedding = ElmoEmbedding()
+    elmoEmbedding = ElmoEmbedding(elmo, sess)
+    # embedding = elmoEmbedding.embed(words_to_embed, sess)
+    # embedding = sess.run(embedding_tensor)
+    # print(embedding.shape)
 
-    print(elmo_embedding.embed("this is a test", sess))
 
     glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
     syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
 
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set(), elmoEmbedding),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
-    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
+    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set(), elmoEmbedding),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 

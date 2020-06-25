@@ -14,7 +14,7 @@ def tokenizer(x):
 class TweetsDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, glove_embedding, syngcn_embedding):
+    def __init__(self, glove_embedding, syngcn_embedding, elmo_embedding):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -25,6 +25,7 @@ class TweetsDataset(Dataset):
         # self.embedding_lookup, self.dataset = get_glove_embedding(datapath, train_csv_file, test_csv_file, train_or_test, sentence_length_cut)
         self.glove_embedding_lookup, self.glove_dataset = glove_embedding
         self.syngcn_embedding_lookup, self.syngcn_dataset = syngcn_embedding
+        self.elmo_embedding_lookup = elmo_embedding
 
     def __len__(self):
         return len(self.glove_dataset)
@@ -46,6 +47,8 @@ class TweetsDataset(Dataset):
 
         glove_embeddings = self.glove_embedding_lookup.vocab.vectors[self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T].squeeze(0)
         syngcn_embeddings = self.syngcn_embedding_lookup.vocab.vectors[self.syngcn_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T].squeeze(0)
+        elmo_embeddings = self.elmo_embedding_lookup.embed([self.glove_dataset[idx].text])
+        print("elmo shape:{}".format(elmo_embeddings.shape))
 
         embeddings = torch.cat((glove_embeddings, syngcn_embeddings), 1)
         # print(embeddings.shape)

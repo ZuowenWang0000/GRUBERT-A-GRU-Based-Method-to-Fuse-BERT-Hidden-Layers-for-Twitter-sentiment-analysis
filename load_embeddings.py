@@ -91,11 +91,13 @@ class SynGcnEmbedding:
         return self.text_field_synGCN, self.valid_synGCN
 
 class ElmoEmbedding:
-    def __init__(self):
-        self.elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=False)
-
-    def embed(self, sentence, sess):
-        return sess.run(self.elmo([sentence], signature="default", as_dict=True)["word_emb"])
+    def __init__(self, elmo, sess):
+        # self.elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=False)
+        self.elmo = elmo
+        self.sess = sess
+    def embed(self, sentence):
+        print(sentence)
+        return self.sess.run(self.elmo(inputs={"tokens": sentence, "sequence_len":[len(sentence[0])] }, signature="tokens", as_dict=True)["word_emb"])
 
 # def get_syngcn_embedding(data_path, syngcn_path):
 #     text_field_synGCN = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length = 40)
