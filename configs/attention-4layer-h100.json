@@ -7,8 +7,8 @@
     "model": {
         "architecture": "attention",
         "n_classes": 2,
-        "word_rnn_size": 50,
-        "word_rnn_layers": 1,
+        "word_rnn_size": 250,
+        "word_rnn_layers": 4,
         "word_att_size": 100,
         "dropout": 0.3,
         "fine_tune_word_embeddings": false,
@@ -25,8 +25,6 @@
         "print_freq": 200,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-	"save_checkpoint_path": 
-"/scratch/hornel/log_dir/attention",
         "train_without_val": false
     },
     "dataset": {
