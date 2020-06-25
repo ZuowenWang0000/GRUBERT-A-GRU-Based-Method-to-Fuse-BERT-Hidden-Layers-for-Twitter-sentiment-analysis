@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 import tensorflow_hub as hub
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
 from load_embeddings import *
 
 def tokenizer(x):

@@ -17,7 +17,9 @@ from torch.utils.tensorboard import SummaryWriter
 import tensorflow_hub as hub
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"]="-1"
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_eager_execution()
+import sys
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -156,6 +158,7 @@ def main(config, save_checkpoint_path, seed=None):
                 test(val_loader, model, criterion, device, config, writer, epoch)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
+        sys.stdout.flush()
 
     train_end_time = time.time()
     print("Total training time : {} minutes".format((train_end_time-train_start_time)/60.0))

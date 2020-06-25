@@ -12,6 +12,6 @@ export mem_per_gpu=15000
 export JOB_NAME='cil'
 
 # load python
-module load python_gpu
+module load gcc/6.3.0 python_gpu/3.7.4
 
 sh submit_train.sh $@
