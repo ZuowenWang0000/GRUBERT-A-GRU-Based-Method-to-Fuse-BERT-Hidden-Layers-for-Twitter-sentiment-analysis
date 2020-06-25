@@ -12,8 +12,11 @@ import click
 import os
 import copy
 from test import test
-from load_embeddings import GloveEmbedding, SynGcnEmbedding
+from load_embeddings import *
 from torch.utils.tensorboard import SummaryWriter
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+import tensorflow as tf
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -99,8 +102,15 @@ def main(config, save_checkpoint_path, seed=None):
     model = model.to(device)
     criterion = criterion.to(device)
 
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    elmo_embedding = ElmoEmbedding()
+
+    print(elmo_embedding.embed("this is a test", sess))
+
     glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
     syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
+
 
     # DataLoaders
     train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),

@@ -2,6 +2,8 @@ import torchtext.vocab as vocab
 from torchtext.data import Field
 from torchtext.data import TabularDataset
 from torchtext.data import BucketIterator
+import tensorflow_hub as hub
+import tensorflow as tf
 import os
 
 def tokenize(x):
@@ -87,6 +89,13 @@ class SynGcnEmbedding:
 
     def get_test_set(self):
         return self.text_field_synGCN, self.valid_synGCN
+
+class ElmoEmbedding:
+    def __init__(self):
+        self.elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=False)
+
+    def embed(self, sentence, sess):
+        return sess.run(self.elmo([sentence], signature="default", as_dict=True)["word_emb"])
 
 # def get_syngcn_embedding(data_path, syngcn_path):
 #     text_field_synGCN = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length = 40)
