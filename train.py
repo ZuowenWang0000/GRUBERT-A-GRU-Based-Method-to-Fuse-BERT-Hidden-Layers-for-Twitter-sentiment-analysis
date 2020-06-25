@@ -58,6 +58,7 @@ def main(config, save_checkpoint_path, seed=None):
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
+    save_checkpoint_path = config.training.save_checkpoint_path
 
     # Dataset parameters
     dataset_path = config.dataset.dataset_dir
