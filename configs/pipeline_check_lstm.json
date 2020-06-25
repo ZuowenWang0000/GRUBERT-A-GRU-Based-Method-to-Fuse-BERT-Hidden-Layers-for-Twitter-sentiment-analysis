@@ -1,6 +1,6 @@
 {
     "embeddings": {
-        "emb_sizes_list": [300, 300],
+        "emb_sizes_list": [300, 300, 512],
         "use_regularization": "none",
         "l1_lambda": 0.0001
     },
@@ -19,7 +19,7 @@
         "batch_size": 64,
         "lr": 1e-3,
         "momentum": 0.9,
-        "workers": 4,
+        "workers": 0,
         "epochs": 5,
         "grad_clip": "None",
         "print_freq": 2000,

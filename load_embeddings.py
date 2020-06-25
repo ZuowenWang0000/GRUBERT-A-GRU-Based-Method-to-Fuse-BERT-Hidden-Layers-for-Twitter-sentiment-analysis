@@ -96,8 +96,10 @@ class ElmoEmbedding:
         self.elmo = elmo
         self.sess = sess
     def embed(self, sentence):
-        print(sentence)
-        return self.sess.run(self.elmo(inputs={"tokens": sentence, "sequence_len":[len(sentence[0])] }, signature="tokens", as_dict=True)["word_emb"])
+        # sentence= ["dog", "hello"]
+        # print(sentence)
+        # print(len(sentence))
+        return self.sess.run(self.elmo(inputs={"tokens": sentence, "sequence_len":[len(sentence)] }, signature="tokens", as_dict=True)["word_emb"])
 
 # def get_syngcn_embedding(data_path, syngcn_path):
 #     text_field_synGCN = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length = 40)

@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
+import tensorflow_hub as hub
+import tensorflow as tf
+from load_embeddings import *
 
 def tokenizer(x):
 
@@ -14,7 +17,7 @@ def tokenizer(x):
 class TweetsDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, glove_embedding, syngcn_embedding, elmo_embedding):
+    def __init__(self, glove_embedding, syngcn_embedding):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -25,7 +28,14 @@ class TweetsDataset(Dataset):
         # self.embedding_lookup, self.dataset = get_glove_embedding(datapath, train_csv_file, test_csv_file, train_or_test, sentence_length_cut)
         self.glove_embedding_lookup, self.glove_dataset = glove_embedding
         self.syngcn_embedding_lookup, self.syngcn_dataset = syngcn_embedding
-        self.elmo_embedding_lookup = elmo_embedding
+
+        self.elmo = hub.Module("https://tfhub.dev/google/elmo/3")
+        self.sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
+        # elmo_embedding = ElmoEmbedding(elmo, sess)
+        # elmoEmbedding.embed(words_to_embed, sess)
+
+        self.elmo_embedding_lookup = ElmoEmbedding(self.elmo, self.sess)
 
     def __len__(self):
         return len(self.glove_dataset)
@@ -44,13 +54,23 @@ class TweetsDataset(Dataset):
         # else:
         #     embeddings = np.zeros([self.sentence_length_cut, embedding_dim])
         #     embeddings[0:sentence_length] = embeddings_temp
+        # print([self.glove_dataset[idx].text])
+        ids = self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T[0]
+        # print(ids)
+        tweet = [self.glove_embedding_lookup.vocab.itos[i] for i in ids]
+        # print(tweet)
+
+        elmo_embeddings = self.elmo_embedding_lookup.embed([tweet]).squeeze(0)
+        # print(elmo_embeddings)
+        # print(self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0])
+        # print("elmo shape:{}".format(elmo_embeddings.shape))
 
         glove_embeddings = self.glove_embedding_lookup.vocab.vectors[self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T].squeeze(0)
         syngcn_embeddings = self.syngcn_embedding_lookup.vocab.vectors[self.syngcn_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T].squeeze(0)
-        elmo_embeddings = self.elmo_embedding_lookup.embed([self.glove_dataset[idx].text])
-        print("elmo shape:{}".format(elmo_embeddings.shape))
+        # print("glove shpae:{}".format(glove_embeddings.shape))
+        # print("syn shape:{}".format(syngcn_embeddings.shape))
 
-        embeddings = torch.cat((glove_embeddings, syngcn_embeddings), 1)
+        embeddings = torch.cat((glove_embeddings, syngcn_embeddings, torch.tensor(elmo_embeddings)), 1)
         # print(embeddings.shape)
 
         # print(embeddings)

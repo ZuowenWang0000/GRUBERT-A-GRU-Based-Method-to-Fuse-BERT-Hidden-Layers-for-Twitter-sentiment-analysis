@@ -105,10 +105,10 @@ def main(config, save_checkpoint_path, seed=None):
 
     words_to_embed = "dog cat sloth"  # <-- it's a list now, and the name changed
 
-    elmo = hub.Module("https://tfhub.dev/google/elmo/3")
-    sess = tf.Session()
-    sess.run(tf.global_variables_initializer())
-    elmoEmbedding = ElmoEmbedding(elmo, sess)
+    # elmo = hub.Module("https://tfhub.dev/google/elmo/3")
+    # sess = tf.Session()
+    # sess.run(tf.global_variables_initializer())
+    # elmoEmbedding = ElmoEmbedding(elmo, sess)
     # embedding = elmoEmbedding.embed(words_to_embed, sess)
     # embedding = sess.run(embedding_tensor)
     # print(embedding.shape)
@@ -119,11 +119,11 @@ def main(config, save_checkpoint_path, seed=None):
 
 
     # DataLoaders
-    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set(), elmoEmbedding),
+    train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
     #    validation
-    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set(), elmoEmbedding),
+    val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=True)
 
