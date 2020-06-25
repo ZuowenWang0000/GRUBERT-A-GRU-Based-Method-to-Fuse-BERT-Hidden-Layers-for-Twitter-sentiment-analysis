@@ -14,4 +14,4 @@ export JOB_NAME='cil'
 # load python
 module load python_gpu
 
-sh submit_train.sh
+sh submit_train.sh $@

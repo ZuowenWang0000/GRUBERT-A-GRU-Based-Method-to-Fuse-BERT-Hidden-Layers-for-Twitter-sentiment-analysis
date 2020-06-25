@@ -130,7 +130,7 @@ def main(config, save_checkpoint_path, seed=None):
               tf_writer=writer)
 
         # Decay learning rate every epoch
-        adjust_learning_rate(optimizer, 0.999)
+        adjust_learning_rate(optimizer, 0.99)
 
         # Save checkpoint
         if epoch % save_checkpoint_freq_epoch == 0:
