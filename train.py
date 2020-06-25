@@ -146,6 +146,7 @@ def main(config, save_checkpoint_path, seed=None):
 
     print("Final evaluation:")
     test(val_loader, model, criterion, device, config, writer, epoch)
+    writer.close()
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer):
