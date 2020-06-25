@@ -112,7 +112,7 @@ def main(config, save_checkpoint_path, seed=None):
                                                num_workers=workers, pin_memory=True)
 
     # set up tensorboard writer
-    writer = SummaryWriter(os.path.join(save_checkpoint_path, 'checkpoint_tf_board'))
+    writer = SummaryWriter(save_checkpoint_path)
 
     # writer.add_graph(model)
 
@@ -229,6 +229,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs))
     # ...log the running loss, accuracy
+    print("***writing to tf board")
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
     tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
     tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
