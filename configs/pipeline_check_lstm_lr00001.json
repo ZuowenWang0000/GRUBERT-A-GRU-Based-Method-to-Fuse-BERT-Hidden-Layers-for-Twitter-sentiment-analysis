@@ -17,7 +17,7 @@
     "training": {
         "start_epoch": 0,
         "batch_size": 100,
-        "lr": 1e-3,
+        "lr": 1e-4,
         "momentum": 0.9,
         "workers": 0,
         "epochs": 30,
@@ -25,7 +25,7 @@
         "print_freq": 250,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/hornel/log_dir/pipeline_check_lstm_bs100_elmo",
+        "save_checkpoint_path": "/cluster/scratch/hornel/log_dir/pipeline_check_lstm_bs100_elmo_lr00001",
         "train_without_val": false
     },
     "dataset": {
