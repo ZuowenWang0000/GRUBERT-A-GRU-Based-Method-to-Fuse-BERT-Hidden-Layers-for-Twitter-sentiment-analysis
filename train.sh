@@ -6,7 +6,7 @@ export ttime=24:00
 # number of gpus per job
 export num_gpu_per_job=1
 # memory per job
-export mem_per_gpu=15000
+export mem_per_gpu=22000
 
 
 export JOB_NAME='cil'

@@ -19,8 +19,8 @@ import os
 # os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # import tensorflow as tf
-import tensorflow.compat.v1 as tf
-tf.disable_eager_execution()
+import tensorflow as tf
+# tf.disable_eager_execution()
 import sys
 
 def main(config, save_checkpoint_path, seed=None):
@@ -137,10 +137,10 @@ def main(config, save_checkpoint_path, seed=None):
     # writer.add_graph(model)
 
     # initialzie elmo
-    sess = tf.Session()
-    elmo = hub.Module("https://tfhub.dev/google/elmo/3")
-    sess.run(tf.global_variables_initializer())
-    elmoEmbedding = ElmoEmbedding(elmo, sess)
+    # sess = tf.Session()
+    elmo = hub.load("https://tfhub.dev/google/elmo/3")
+    # sess.run(tf.global_variables_initializer())
+    elmoEmbedding = ElmoEmbedding(elmo, None)
 
     # Epochs
     train_start_time = time.time()

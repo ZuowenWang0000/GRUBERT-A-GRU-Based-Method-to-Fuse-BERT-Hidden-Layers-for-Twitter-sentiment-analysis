@@ -3,8 +3,8 @@ from torchtext.data import Field
 from torchtext.data import TabularDataset
 from torchtext.data import BucketIterator
 import tensorflow_hub as hub
-import tensorflow.compat.v1 as tf
-tf.disable_eager_execution()
+import tensorflow as tf
+# tf.disable_eager_execution()
 import os
 
 def tokenize(x):
@@ -100,7 +100,8 @@ class ElmoEmbedding:
         # sentence= ["dog", "hello"]
         # print(sentence)
         # print(len(sentence))
-        return self.sess.run(self.elmo(inputs={"tokens": sentence, "sequence_len": length}, signature="tokens", as_dict=True)["word_emb"])
+        # return self.sess.run(self.elmo(inputs={"tokens": sentence, "sequence_len": length}, signature="tokens", as_dict=True)["word_emb"])
+        return self.elmo.signatures["tokens"](tokens=tf.convert_to_tensor(sentence), sequence_len=tf.convert_to_tensor(length))["word_emb"].numpy()
 
 # def get_syngcn_embedding(data_path, syngcn_path):
 #     text_field_synGCN = Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, fix_length = 40)
