@@ -11,9 +11,10 @@ import json
 import click
 import os
 import copy
+import numpy as np
 
 
-def test(eval_loader, model, criterion, device, config, tf_writer, epoch):
+def test(eval_loader, model, criterion, device, config, tf_writer, epoch, elmo):
     """
     Performs one epoch's training.
 
@@ -28,10 +29,14 @@ def test(eval_loader, model, criterion, device, config, tf_writer, epoch):
     accs = AverageMeter()  # accuracies
 
     # Batches
-    for i, data in enumerate(eval_loader):
+    length = config.model.sentence_length_cut
+    for i, (data, tweet) in enumerate(eval_loader):
         embeddings = data["embeddings"]
-        labels = data["label"]
         embeddings = embeddings.to(device)
+        labels = data["label"]
+        elmo_embeddings = torch.Tensor(elmo.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
+        # print(elmo_embeddings.shape)
+        embeddings = torch.cat([embeddings, elmo_embeddings], 2)
         labels = labels.to(device)  # (batch_size)
 
         # Forward prop.

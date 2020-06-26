@@ -22,6 +22,7 @@ import os
 import tensorflow as tf
 # tf.disable_eager_execution()
 import sys
+import numpy as np
 
 def main(config, save_checkpoint_path, seed=None):
     """
@@ -164,7 +165,7 @@ def main(config, save_checkpoint_path, seed=None):
         if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
             if not train_without_val:
-                test(val_loader, model, criterion, device, config, writer, epoch)
+                test(val_loader, model, criterion, device, config, writer, epoch, elmoEmbedding)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
         sys.stdout.flush()
@@ -173,7 +174,7 @@ def main(config, save_checkpoint_path, seed=None):
     print("Total training time : {} minutes".format((train_end_time-train_start_time)/60.0))
 
     print("Final evaluation:")
-    test(val_loader, model, criterion, device, config, writer, epoch)
+    test(val_loader, model, criterion, device, config, writer, epoch, elmoEmbedding)
     writer.close()
 
 
@@ -200,31 +201,25 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     # Batches
     length = config.model.sentence_length_cut
     for i, (data, tweet) in enumerate(train_loader):
-        batch_start = time.time()
+        # batch_start = time.time()
         # embeddings = torch.tensor(data["embeddings"])
         embeddings = data["embeddings"]
         labels = data["label"]
         embeddings = embeddings.to(device)
-        labels = labels.to(device)  # (batch_size)
-
-        data_time.update(time.time() - start)
-
-        # for j in range(len(tweet)):
-        #     print(tweet[j][1])
-        # print(np.array(tweet).T[0])
-        # print(np.array(tweet).T[1])
-        # print(np.array(tweet).T[2])
 
 
         elmo_embeddings = torch.Tensor(elmo.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
         # print(elmo_embeddings.shape)
+        labels = labels.to(device)  # (batch_size)
 
         embeddings = torch.cat([embeddings, elmo_embeddings], 2)
-        batch_load = time.time()
+        # batch_load = time.time()
+        data_time.update(time.time() - start)
+
 
         # print(embeddings.shape)
 
-        print("batch load time:{}".format(batch_load - batch_start))
+        # print("batch load time:{}".format(batch_load - batch_start))
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
@@ -275,7 +270,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs))
         batch_end = time.time()
-        print("batch time :{}".format(batch_end - batch_start))
+        # print("batch time :{}".format(batch_end - batch_start))
     # ...log the running loss, accuracy
     print("***writing to tf board")
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
