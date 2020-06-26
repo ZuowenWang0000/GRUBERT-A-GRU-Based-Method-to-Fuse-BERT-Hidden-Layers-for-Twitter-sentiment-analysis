@@ -32,20 +32,20 @@ from pytorch_lightning.callbacks import Callback
 from transformers import BertModel
 
 
-test_path="/test/" # location where test data resides
-preprocessed_path = "/train/" # location where data_preprocessed folder resides
-save_path = "/saved_files/" # folder where you want to save files created by this notebook
+test_path="dataset/" # location where test data resides
+preprocessed_path = "dataset/" # location where data_preprocessed folder resides
+save_path = "dataset/" # folder where you want to save files created by this notebook
 
 
 Item = namedtuple('Item','text label')
 items = []
 
-with open(preprocessed_path + "cleaned_pos_full.txt") as f:
+with open(preprocessed_path + "train_pos.txt") as f:
     for line in f:
         l = line.rstrip('\n')
         items.append(Item(l, 1))
 
-with open(preprocessed_path + "cleaned_neg_full.txt") as f:
+with open(preprocessed_path + "train_neg.txt") as f:
     for line in f:
         l = line.rstrip('\n')
         items.append(Item(l, 0))
@@ -490,5 +490,5 @@ predictions.to_csv(save_path + "submission_bert_4lstm.csv",index = False)
 
 
 # Start tensorboard.
-%reload_ext tensorboard
-%tensorboard --logdir tb_logs/
+#%reload_ext tensorboard
+#%tensorboard --logdir tb_logs/
