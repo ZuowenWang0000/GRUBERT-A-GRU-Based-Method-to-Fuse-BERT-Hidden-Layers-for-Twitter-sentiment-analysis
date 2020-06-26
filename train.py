@@ -17,6 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 import tensorflow_hub as hub
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow.compat.v1 as tf
 tf.disable_eager_execution()
 import sys
