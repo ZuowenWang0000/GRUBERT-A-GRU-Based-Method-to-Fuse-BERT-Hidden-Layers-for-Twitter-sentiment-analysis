@@ -19,6 +19,7 @@
         "batch_size": 64,
         "lr": 1e-3,
         "momentum": 0.9,
+
         "workers": 0,
         "epochs": 5,
         "grad_clip": "None",

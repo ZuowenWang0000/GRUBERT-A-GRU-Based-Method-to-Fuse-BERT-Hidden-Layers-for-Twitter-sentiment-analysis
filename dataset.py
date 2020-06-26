@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 import tensorflow_hub as hub
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 tf.disable_eager_execution()
 from load_embeddings import *
 
@@ -30,13 +30,13 @@ class TweetsDataset(Dataset):
         self.glove_embedding_lookup, self.glove_dataset = glove_embedding
         self.syngcn_embedding_lookup, self.syngcn_dataset = syngcn_embedding
 
-        self.elmo = hub.Module("https://tfhub.dev/google/elmo/3")
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
+        # self.elmo = hub.Module("https://tfhub.dev/google/elmo/3")
+        # self.sess = tf.Session()
+        # self.sess.run(tf.global_variables_initializer())
         # elmo_embedding = ElmoEmbedding(elmo, sess)
         # elmoEmbedding.embed(words_to_embed, sess)
 
-        self.elmo_embedding_lookup = ElmoEmbedding(self.elmo, self.sess)
+        # self.elmo_embedding_lookup = ElmoEmbedding(self.elmo, self.sess)
 
     def __len__(self):
         return len(self.glove_dataset)
@@ -57,11 +57,13 @@ class TweetsDataset(Dataset):
         #     embeddings[0:sentence_length] = embeddings_temp
         # print([self.glove_dataset[idx].text])
         ids = self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0].T[0]
-        # print(ids)
-        tweet = [self.glove_embedding_lookup.vocab.itos[i] for i in ids]
+        # print(ids)1
+        tweet = [self.glove_embedding_lookup.vocab.itos[i] if i != 1 else "" for i in ids]
         # print(tweet)
 
-        elmo_embeddings = self.elmo_embedding_lookup.embed([tweet]).squeeze(0)
+        # todo uncomment
+        # elmo_embeddings = self.elmo_embedding_lookup.embed([tweet]).squeeze(0)
+
         # print(elmo_embeddings)
         # print(self.glove_dataset.fields["text"].process([self.glove_dataset[idx].text])[0])
         # print("elmo shape:{}".format(elmo_embeddings.shape))
@@ -71,7 +73,8 @@ class TweetsDataset(Dataset):
         # print("glove shpae:{}".format(glove_embeddings.shape))
         # print("syn shape:{}".format(syngcn_embeddings.shape))
 
-        embeddings = torch.cat((glove_embeddings, syngcn_embeddings, torch.tensor(elmo_embeddings)), 1)
+        # embeddings = torch.cat((glove_embeddings, syngcn_embeddings, torch.tensor(elmo_embeddings)), 1)
+        embeddings = torch.cat((glove_embeddings, syngcn_embeddings), 1)
         # print(embeddings.shape)
 
         # print(embeddings)
@@ -79,5 +82,5 @@ class TweetsDataset(Dataset):
 
         # return {"embeddings": torch.tensor(embeddings), "labels": torch.tensor(labels)}
         return {"embeddings": embeddings.type(torch.FloatTensor),
-                "label": torch.tensor(int(label))}
+                "label": torch.tensor(int(label))}, tweet
 

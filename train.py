@@ -17,8 +17,8 @@ from torch.utils.tensorboard import SummaryWriter
 import tensorflow_hub as hub
 import os
 # os.environ["CUDA_VISIBLE_DEVICES"]="-1"
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-import tensorflow.compat.v1 as tf
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
 tf.disable_eager_execution()
 import sys
 
@@ -135,6 +135,12 @@ def main(config, save_checkpoint_path, seed=None):
 
     # writer.add_graph(model)
 
+    # initialzie elmo
+    sess = tf.Session()
+    elmo = hub.Module("https://tfhub.dev/google/elmo/3")
+    sess.run(tf.global_variables_initializer())
+    elmoEmbedding = ElmoEmbedding(elmo, sess)
+
     # Epochs
     train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
@@ -147,7 +153,8 @@ def main(config, save_checkpoint_path, seed=None):
               epoch=epoch,
               device=device,
               config=config,
-              tf_writer=writer)
+              tf_writer=writer,
+              elmo = elmoEmbedding)
 
         # Decay learning rate every epoch
         adjust_learning_rate(optimizer, 0.99)
@@ -169,7 +176,7 @@ def main(config, save_checkpoint_path, seed=None):
     writer.close()
 
 
-def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer):
+def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, elmo):
     """
     Performs one epoch's training.
 
@@ -190,8 +197,9 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     start = time.time()
 
     # Batches
-    for i, data in enumerate(train_loader):
-
+    length = config.model.sentence_length_cut
+    for i, (data, tweet) in enumerate(train_loader):
+        batch_start = time.time()
         # embeddings = torch.tensor(data["embeddings"])
         embeddings = data["embeddings"]
         labels = data["label"]
@@ -200,6 +208,22 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 
         data_time.update(time.time() - start)
 
+        # for j in range(len(tweet)):
+        #     print(tweet[j][1])
+        # print(np.array(tweet).T[0])
+        # print(np.array(tweet).T[1])
+        # print(np.array(tweet).T[2])
+
+
+        elmo_embeddings = torch.Tensor(elmo.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
+        # print(elmo_embeddings.shape)
+
+        embeddings = torch.cat([embeddings, elmo_embeddings], 2)
+        batch_load = time.time()
+
+        # print(embeddings.shape)
+
+        print("batch load time:{}".format(batch_load - batch_start))
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
@@ -249,6 +273,8 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
                                                                   batch_time=batch_time,
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs))
+        batch_end = time.time()
+        print("batch time :{}".format(batch_end - batch_start))
     # ...log the running loss, accuracy
     print("***writing to tf board")
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
