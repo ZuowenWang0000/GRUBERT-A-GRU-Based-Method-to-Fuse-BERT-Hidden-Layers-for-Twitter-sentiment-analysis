@@ -3,7 +3,7 @@ from torchtext.data import Field
 from torchtext.data import TabularDataset
 from torchtext.data import BucketIterator
 import tensorflow_hub as hub
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 tf.disable_eager_execution()
 import os
 
