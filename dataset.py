@@ -81,3 +81,20 @@ class TweetsDataset(Dataset):
         return {"embeddings": embeddings.type(torch.FloatTensor),
                 "label": torch.tensor(int(label))}, tweet
 
+# from flair.embeddings import StackedEmbeddings
+# from flair.data import Sentence
+
+# class FlairDataset(Dataset):
+#     def __init__(self, dataset_path, embeddings):
+#         self.raw_tweets_with_labels = pd.read_csv(dataset_path)
+#         self.embeddings = StackedEmbeddings(embeddings=embeddings)
+
+#     def __len__(self):
+#         return len(self.raw_tweets_with_labels)
+
+#     def __getitem__(self, idx):
+#         tweet = self.raw_tweets_with_labels["text"][idx]
+#         label = self.raw_tweets_with_labels["label"][idx]
+
+#         sentence = Sentence(tweet)
+#         self.embeddings.embed(sentence)

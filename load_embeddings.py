@@ -2,8 +2,6 @@ import torchtext.vocab as vocab
 from torchtext.data import Field
 from torchtext.data import TabularDataset
 from torchtext.data import BucketIterator
-import tensorflow_hub as hub
-import tensorflow as tf
 # tf.disable_eager_execution()
 import os
 
@@ -94,6 +92,8 @@ class SynGcnEmbedding:
 class ElmoEmbedding:
     def __init__(self, elmo, sess):
         # self.elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=False)
+        import tensorflow_hub as hub
+        import tensorflow as tf
         self.elmo = elmo
         self.sess = sess
     def embed(self, sentence, length):
