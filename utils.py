@@ -59,7 +59,7 @@ def save_checkpoint(epoch, model, optimizer, save_checkpoint_path):
              'optimizer': optimizer,
              # 'word_map': word_map
              }
-    filename = 'checkpoint_han_'+'epoch_'+epoch+'.pth.tar'
+    filename = 'checkpoint_han_'+'epoch_'+str(epoch)+'.pth.tar'
     torch.save(state, os.path.join(save_checkpoint_path, filename))
 
 def clip_gradient(optimizer, grad_clip):
