@@ -2,7 +2,7 @@
 
 # Hard coded settings for resources
 # time limit
-export ttime=24:00
+export ttime=4:00
 # number of gpus per job
 export num_gpu_per_job=1
 # memory per job
