@@ -83,10 +83,9 @@ def main_cli(config, save_checkpoint_path, prediction_file_path):
     model = checkpoint['model']
 
     results = predict(eval_loader, model, device, config, elmoEmbedding)
-
-    sub = pd.read_csv("./sample_submission.csv")
+    results = ((results-0.5)*2)
+    sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
-    del sub['index']
     sub.to_csv(prediction_file_path)
 
 if __name__ == '__main__':
