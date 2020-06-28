@@ -16,4 +16,4 @@ class LstmModel(nn.Module):
         x = F.relu(x.permute(1, 0, 2))
         x = self.lin(x)
         x = x.sum(dim=1)
-        return x, None, None
+        return x, None, self.emb_weights
