@@ -15,6 +15,7 @@ import click
 import os
 import copy
 import numpy as np
+import pandas as pd
 
 
 def predict(eval_loader, model, device, config, elmo):
@@ -82,7 +83,12 @@ def main_cli(config, save_checkpoint_path, prediction_file_path):
     model = checkpoint['model']
 
     results = predict(eval_loader, model, device, config, elmoEmbedding)
-    np.savetxt(prediction_file_path, results, delimiter=',')
+    sub = pd.read_csv("./sample_submission.csv")
+    sub["Prediction"] = results.astype(int)
+    del sub['index']
+    sub.to_csv(prediction_file_path)
+
+    # np.savetxt(prediction_file_path, results, delimiter=',')
 
 if __name__ == '__main__':
     main_cli()
