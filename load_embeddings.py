@@ -3,6 +3,8 @@ from torchtext.data import Field
 from torchtext.data import TabularDataset
 from torchtext.data import BucketIterator
 # tf.disable_eager_execution()
+import tensorflow_hub as hub
+import tensorflow as tf
 import os
 
 def tokenize(x):
@@ -92,8 +94,6 @@ class SynGcnEmbedding:
 class ElmoEmbedding:
     def __init__(self, elmo, sess):
         # self.elmo = hub.Module("https://tfhub.dev/google/elmo/3", trainable=False)
-        import tensorflow_hub as hub
-        import tensorflow as tf
         self.elmo = elmo
         self.sess = sess
     def embed(self, sentence, length):

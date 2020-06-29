@@ -5,6 +5,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
+from gru_model import GruModel
 from dataset import TweetsDataset
 from utils import *
 import json
@@ -47,6 +48,9 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False):
     elif config.model.architecture == "lstm":
         print("using lstm model")
         model_type = LstmModel
+    elif config.model.architecture == "gru":
+        print("using gru architecture")
+        model_type = GruModel
     else:
         raise NotImplementedError
     n_classes = config.model.n_classes
@@ -141,18 +145,21 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False):
         test_function = test
 
     else:
-        from flair.embeddings import WordEmbeddings, ELMoEmbeddings, StackedEmbeddings
+        from flair.embeddings import WordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn_gensim.txt")
-        elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="average")
-        embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, elmo_embedding])
+        # elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="average")
+        flair_forward_embedding = FlairEmbeddings("mix-forward", chars_per_chunk=64)
+        flair_backward_embedding = FlairEmbeddings("mix-backward", chars_per_chunk=64)
+        # embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, elmo_embedding])
+        embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, flair_forward_embedding, flair_backward_embedding])
 
         import flair
         from flair.datasets import CSVClassificationDataset
         print("[flair] initializing datasets", flush=True)
-        train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, skip_header=True)
-        val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, skip_header=True)
+        train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         embedder = embedding.to(device)

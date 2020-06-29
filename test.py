@@ -117,7 +117,7 @@ def test(eval_loader, model, criterion, device, config, tf_writer, epoch, embedd
         embeddings = data["embeddings"]
         embeddings = embeddings.to(device)
         labels = data["label"]
-        elmo_embeddings = torch.Tensor(elmo.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
+        elmo_embeddings = torch.Tensor(embedder.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
         # print(elmo_embeddings.shape)
         embeddings = torch.cat([embeddings, elmo_embeddings], 2)
         labels = labels.to(device)  # (batch_size)
