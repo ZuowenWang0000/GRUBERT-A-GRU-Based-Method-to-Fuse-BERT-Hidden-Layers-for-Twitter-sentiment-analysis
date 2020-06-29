@@ -148,7 +148,7 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False):
         from flair.embeddings import WordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
-        syngcn_embedding = WordEmbeddings("../embeddings/syngcn_gensim.txt")
+        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
         # elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="average")
         flair_forward_embedding = FlairEmbeddings("mix-forward", chars_per_chunk=64)
         flair_backward_embedding = FlairEmbeddings("mix-backward", chars_per_chunk=64)
