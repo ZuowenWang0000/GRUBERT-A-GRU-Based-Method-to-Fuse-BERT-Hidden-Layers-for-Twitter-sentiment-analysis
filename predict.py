@@ -76,7 +76,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path):
 
     # dataloader
     eval_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
-                                               batch_size=100, shuffle=False,
+                                               batch_size=8, shuffle=False,
                                                num_workers=workers, pin_memory=True)
 
     checkpoint = torch.load(save_checkpoint_path)
@@ -86,7 +86,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path):
     results = ((results-0.5)*2)
     sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
-    sub.to_csv(prediction_file_path)
+    sub.to_csv(prediction_file_path, index=False)
 
 if __name__ == '__main__':
     main_cli()
