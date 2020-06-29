@@ -333,6 +333,8 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs), flush=True)
         batch_end = time.time()
+        for sentence in sentences:
+            sentence.clear_embeddings()
         # print("batch time :{}".format(batch_end - batch_start))
     # ...log the running loss, accuracy
     print("***writing to tf board")
