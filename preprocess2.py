@@ -35,15 +35,18 @@ def process2(tweets):
 
 def process2_iter(tweet):
     tweet = tweet.strip()
+    if re.match(r"[^\S\n\t]+", tweet):
+        tweet = ""
+        return tweet
     tweet = re.sub("xxuser", "user", tweet)
     tweet = re.sub("xxurl", "url", tweet)
-
     for key in emoticons:
        tweet = tweet.replace(key, emoticons[key])
     return tweet
 
 num_cores = multiprocessing.cpu_count()
 results = Parallel(n_jobs = num_cores)(delayed(process2_iter)(tweet) for tweet in tweets)
+print("length before processing :{}".format(len(data['text'])))
 data['text'] = results
 # drop rows where tweet length == 0
 drop_list = []
@@ -55,5 +58,5 @@ for i in range(len(data['text'])):
 # print(drop_list)
 data = data.drop(drop_list)
 # print(data)
-
-data.to_csv(file_to_process, index=False)
+print("length after processing :{}".format(len(data['text'])))
+data.to_csv("v2"+file_to_process, index=False)
