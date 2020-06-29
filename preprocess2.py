@@ -59,4 +59,4 @@ for i in range(len(data['text'])):
 data = data.drop(drop_list)
 # print(data)
 print("length after processing :{}".format(len(data['text'])))
-data.to_csv("v2"+file_to_process, index=False)
+data.to_csv(file_to_process + "v2", index=False)
