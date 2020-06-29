@@ -1,6 +1,5 @@
 import re
 import sys
-from autocorrect import Speller
 import pandas as pd
 from joblib import Parallel, delayed
 import multiprocessing
@@ -34,6 +33,8 @@ def process2(tweets):
             continue
 
 def process2_iter(tweet):
+    if type(tweet)==float:
+        return ""
     tweet = tweet.strip()
     if re.match(r"[^\S\n\t]+", tweet):
         tweet = ""
