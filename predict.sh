@@ -13,6 +13,6 @@ export JOB_NAME='cil'
 
 # load python
 module load eth_proxy
-module load gcc/6.3.0 python_gpu/3.7.4
+module load gcc/6.3.0 python_gpu/3.7.4 hdf5
 
 sh submit_predict.sh $@
