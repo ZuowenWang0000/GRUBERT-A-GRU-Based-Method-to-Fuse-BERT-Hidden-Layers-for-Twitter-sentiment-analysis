@@ -76,7 +76,9 @@ def test_flair(eval_loader, model, criterion, device, config, tf_writer, epoch, 
         labels = labels.to(device)  # (batch_size)
 
         scores, word_alphas, emb_weights = model(embeddings)
-
+        
+        for sentence in sentences:
+            sentence.clear_embeddings()
         loss = criterion(scores.to(device), labels)  # scalar
 
         # Find accuracy
@@ -87,6 +89,7 @@ def test_flair(eval_loader, model, criterion, device, config, tf_writer, epoch, 
         # Keep track of metrics
         losses.update(loss.item(), labels.size(0))
         accs.update(accuracy, labels.size(0))
+        
 
     # Print eval status
     print('Evaluation:\t'
