@@ -6,14 +6,14 @@ import torch.optim as optim
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from dataset import TweetsDataset
+# from dataset import TweetsDataset
 from utils import *
 import json
 import click
 import os
 import copy
 from test import *
-from load_embeddings import *
+# from load_embeddings import *
 from torch.utils.tensorboard import SummaryWriter
 # import tensorflow_hub as hub
 import os
@@ -25,7 +25,7 @@ import os
 import sys
 import numpy as np
 
-def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=False, fine_tune=False):
+def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=False):
     """
     Training and validation.
     """
@@ -39,7 +39,7 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
 
     print(config)
     # embedding parameters , the center of our study
-    emb_sizes_list = config.embeddings.emb_sizes_list
+    # emb_sizes_list = config.embeddings.emb_sizes_list
 
     # Model parameters
     if config.model.architecture == "attention":
@@ -84,34 +84,6 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Initialize model or load checkpoint
-    if checkpoint!="None":
-        checkpoint = torch.load(checkpoint)
-        model = checkpoint['model']
-        optimizer = checkpoint['optimizer']
-        # word_map = checkpoint['word_map']
-        start_epoch = checkpoint['epoch'] + 1
-        print(
-            '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
-    else:
-        model = model_type(n_classes=n_classes,
-                                 emb_sizes_list=emb_sizes_list,
-                                 word_rnn_size=word_rnn_size,
-                                 word_rnn_layers=word_rnn_layers,
-                                 word_att_size=word_att_size,
-                                 dropout=dropout,
-                                 device=device)
-
-        # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
-        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-
-    # Loss functions
-    criterion = nn.CrossEntropyLoss()
-
-    # Move to device
-    model = model.to(device)
-    criterion = criterion.to(device)
-
     # elmo = hub.Module("https://tfhub.dev/google/elmo/3")
     # sess = tf.Session()
     # sess.run(tf.global_variables_initializer())
@@ -121,8 +93,8 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
     # print(embedding.shape)
 
 
-    if use_flair:
-        from flair.embeddings import WordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings
+    if embedding == "flair":
+        from flair.embeddings import WordEmbeddings, FlairEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
@@ -145,8 +117,8 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
         test_function = test_flair
         print("[flair] entering training loop", flush=True)
 
-    elif use_bert:
-        from flair.embeddings import WordEmbeddings, ELMoEmbeddings,  TransformerWordEmbeddings, StackedEmbeddings
+    elif embedding == "bert":
+        from flair.embeddings import WordEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
@@ -157,7 +129,7 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
 
         import flair
         from flair.datasets import CSVClassificationDataset
-        print("[flair] initializing datasets", flush=True)
+        print("[bert] initializing datasets", flush=True)
         train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
@@ -169,36 +141,83 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False, use_bert=Fals
         print("[bert] entering training loop", flush=True)
 
     else:
-        import tensorflow as tf
-        import tensorflow_hub as hub
-        glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
-        syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
+        from flair.embeddings import WordEmbeddings, ELMoEmbeddings, StackedEmbeddings
+        print("[elmo] initializing embeddings", flush=True)
+        glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
+        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
+        # elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="average")
+        elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="top")
+        # embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, elmo_embedding])
+        embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, elmo_embedding])
+
+        import flair
+        from flair.datasets import CSVClassificationDataset
+        print("[elmo] initializing datasets", flush=True)
+        train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
+        val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
+        embedder = embedding.to(device)
+
+        train_function = train_flair
+        test_function = test_flair
+        print("[elmo] entering training loop", flush=True)
+        # import tensorflow as tf
+        # import tensorflow_hub as hub
+        # glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
+        # syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
 
 
-        # DataLoaders
-        train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),
-                                                batch_size=batch_size, shuffle=True,
-                                                num_workers=workers, pin_memory=True)
-        #    validation
-        val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
-                                                batch_size=batch_size, shuffle=True,
-                                                num_workers=workers, pin_memory=True)
+        # # DataLoaders
+        # train_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_train_set(), syngcn_embedding.get_train_set()),
+        #                                         batch_size=batch_size, shuffle=True,
+        #                                         num_workers=workers, pin_memory=True)
+        # #    validation
+        # val_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
+        #                                         batch_size=batch_size, shuffle=True,
+        #                                         num_workers=workers, pin_memory=True)
 
-        # initialzie elmo
-        # sess = tf.Session()
-        elmo = hub.load("https://tfhub.dev/google/elmo/3")
-        # sess.run(tf.global_variables_initializer())
-        embedder = ElmoEmbedding(elmo, None)
-        train_function = train
-        test_function = test
-
+        # # initialzie elmo
+        # # sess = tf.Session()
+        # elmo = hub.load("https://tfhub.dev/google/elmo/3")
+        # # sess.run(tf.global_variables_initializer())
+        # embedder = ElmoEmbedding(elmo, None)
+        # train_function = train
+        # test_function = test
 
     # writer.add_graph(model)
 
-
-
     # set up tensorboard writer
     writer = SummaryWriter(save_checkpoint_path)
+
+    # Initialize model or load checkpoint
+    if checkpoint!="None":
+        checkpoint = torch.load(checkpoint)
+        model = checkpoint['model']
+        optimizer = checkpoint['optimizer']
+        # word_map = checkpoint['word_map']
+        start_epoch = checkpoint['epoch'] + 1
+        print(
+            '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
+    else:
+        temp_list = [e.embedding_length for e in embedding.embeddings]
+        model = model_type(n_classes=n_classes,
+                                 emb_sizes_list=temp_list,
+                                 word_rnn_size=word_rnn_size,
+                                 word_rnn_layers=word_rnn_layers,
+                                 word_att_size=word_att_size,
+                                 dropout=dropout,
+                                 device=device)
+
+        # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
+        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+
+    # Loss functions
+    criterion = nn.CrossEntropyLoss()
+
+    # Move to device
+    model = model.to(device)
+    criterion = criterion.to(device)
 
     # Epochs
     train_start_time = time.time()
@@ -472,12 +491,13 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 @click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
 @click.option('--save-checkpoint-path', default='./log_dir/')
 @click.option('--seed', default=0, type=int)
-@click.option('--use-flair', default=False, type=bool)
-@click.option('--use-bert', default=False,type=bool)
+@click.option('--embedding', default='elmo', type=str)
+# @click.option('--use-flair', default=False, type=bool)
+# @click.option('--use-bert', default=False,type=bool)
 @click.option('--fine-tune', default=False, type=bool)
 
-def main_cli(config, save_checkpoint_path, seed, use_flair, use_bert, fine_tune):
-    main(config, save_checkpoint_path, seed, use_flair, use_bert, fine_tune)
+def main_cli(config, save_checkpoint_path, seed, embedding, fine_tune):
+    main(config, save_checkpoint_path, seed, embedding, fine_tune)
 
 
 if __name__ == '__main__':
