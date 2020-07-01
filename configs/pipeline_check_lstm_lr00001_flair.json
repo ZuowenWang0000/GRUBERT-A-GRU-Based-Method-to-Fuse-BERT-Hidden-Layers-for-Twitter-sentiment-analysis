@@ -25,7 +25,7 @@
         "print_freq": 250,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/hornel/log_dir/pipeline_check_lstm_bs100_elmo_lr00001_flair",
+        "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/pipeline_check_lstm_bs100_elmo_lr00001_flair",
         "train_without_val": false
     },
     "dataset": {
