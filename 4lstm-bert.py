@@ -32,34 +32,34 @@ from pytorch_lightning.callbacks import Callback
 from transformers import BertModel
 
 
-test_path="dataset/" # location where test data resides
-preprocessed_path = "dataset/" # location where data_preprocessed folder resides
-save_path = "dataset/" # folder where you want to save files created by this notebook
+test_path="../dataset/" # location where test data resides
+# preprocessed_path = "dataset/" # location where data_preprocessed folder resides
+save_path = "../dataset/" # folder where you want to save files created by this notebook
 
 
-Item = namedtuple('Item','text label')
-items = []
+# Item = namedtuple('Item','text label')
+# items = []
 
-with open(preprocessed_path + "train_pos.txt") as f:
-    for line in f:
-        l = line.rstrip('\n')
-        items.append(Item(l, 1))
+# with open(preprocessed_path + "train_pos.txt") as f:
+#     for line in f:
+#         l = line.rstrip('\n')
+#         items.append(Item(l, 1))
 
-with open(preprocessed_path + "train_neg.txt") as f:
-    for line in f:
-        l = line.rstrip('\n')
-        items.append(Item(l, 0))
+# with open(preprocessed_path + "train_neg.txt") as f:
+#     for line in f:
+#         l = line.rstrip('\n')
+#         items.append(Item(l, 0))
 
-df = pd.DataFrame.from_records(items, columns=['text', 'label'])
+# df = pd.DataFrame.from_records(items, columns=['text', 'label'])
 
 
 
-df.to_csv(save_path + "train_all.csv",index=False,header=True)
+# df.to_csv(save_path + "train_all.csv",index=False,header=True)
 
-main_df = pd.read_csv(save_path + "train_all.csv")
-train , val = train_test_split(main_df,stratify=main_df['label'],test_size=0.2,shuffle=True)
-train.to_csv(save_path + "train_split.csv",header=True,index=False)
-val.to_csv(save_path + "val_split.csv",header=True,index=False)
+# main_df = pd.read_csv(save_path + "train_all.csv")
+# train , val = train_test_split(main_df,stratify=main_df['label'],test_size=0.2,shuffle=True)
+# train.to_csv(save_path + "train_split.csv",header=True,index=False)
+# val.to_csv(save_path + "val_split.csv",header=True,index=False)
 
 
 class TwitterDataset(Dataset):
@@ -414,7 +414,7 @@ else:
   trainer = Trainer(
       logger=logger,
       gpus=1, # run on one GPU
-      max_epochs=20,
+      max_epochs=7,
       callbacks = [MyPrintingCallback()],
       weights_summary='full'
   )
