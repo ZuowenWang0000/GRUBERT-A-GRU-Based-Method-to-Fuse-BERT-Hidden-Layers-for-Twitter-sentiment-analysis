@@ -25,7 +25,7 @@ import os
 import sys
 import numpy as np
 
-def main(config, save_checkpoint_path, seed=None, use_flair=False):
+def main(config, save_checkpoint_path, seed=None, use_flair=False, fine_tune=False):
     """
     Training and validation.
     """
@@ -148,10 +148,10 @@ def main(config, save_checkpoint_path, seed=None, use_flair=False):
         from flair.embeddings import WordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
-        syngcn_embedding = WordEmbeddings("../embeddings/syngcn_gensim.txt")
+        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
         # elmo_embedding = ELMoEmbeddings(model="medium", embedding_mode="average")
-        flair_forward_embedding = FlairEmbeddings("mix-forward", chars_per_chunk=64)
-        flair_backward_embedding = FlairEmbeddings("mix-backward", chars_per_chunk=64)
+        flair_forward_embedding = FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune)
+        flair_backward_embedding = FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune)
         # embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, elmo_embedding])
         embedding = StackedEmbeddings(embeddings=[glove_embedding, syngcn_embedding, flair_forward_embedding, flair_backward_embedding])
 
@@ -333,6 +333,8 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs), flush=True)
         batch_end = time.time()
+        for sentence in sentences:
+            sentence.clear_embeddings()
         # print("batch time :{}".format(batch_end - batch_start))
     # ...log the running loss, accuracy
     print("***writing to tf board")
@@ -446,9 +448,10 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 @click.option('--save-checkpoint-path', default='./log_dir/')
 @click.option('--seed', default=0, type=int)
 @click.option('--use-flair', default=False, type=bool)
+@click.option('--fine-tune', default=False, type=bool)
 
-def main_cli(config, save_checkpoint_path, seed, use_flair):
-    main(config, save_checkpoint_path, seed, use_flair)
+def main_cli(config, save_checkpoint_path, seed, use_flair, fine_tune):
+    main(config, save_checkpoint_path, seed, use_flair, fine_tune)
 
 
 if __name__ == '__main__':

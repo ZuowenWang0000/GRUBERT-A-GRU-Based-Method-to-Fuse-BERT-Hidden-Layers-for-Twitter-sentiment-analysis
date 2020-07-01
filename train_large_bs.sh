@@ -2,12 +2,14 @@
 
 # Hard coded settings for resources
 # time limit
-export ttime=24:00
+export ttime=120:00
 # number of gpus per job
 export num_gpu_per_job=1
 # memory per job
 export mem_per_gpu=22000
-
+# type of GPU
+export gpu_type=TeslaV100_SXM2_32GB
+#export gpu_type=GeForceRTX2080Ti
 
 export JOB_NAME='cil'
 
@@ -15,4 +17,4 @@ export JOB_NAME='cil'
 module load eth_proxy
 module load gcc/6.3.0 python_gpu/3.7.4 hdf5
 
-sh submit_predict.sh $@
+sh submit_train.sh $@
