@@ -1,6 +1,6 @@
 {
     "embeddings": {
-        "emb_sizes_list": [300, 300, 2048, 2048],
+        "emb_sizes_list": [300, 300, 768],
         "use_regularization": "none",
         "l1_lambda": 0.0001
     },
@@ -16,7 +16,7 @@
     },
     "training": {
         "start_epoch": 0,
-        "batch_size": 16,
+        "batch_size": 64,
         "lr": 1e-3,
         "momentum": 0.9,
         "workers": 8,
@@ -25,7 +25,7 @@
         "print_freq": 250,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/lstm_flair_small",
+        "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/lstm_bert_bs64",
         "train_without_val": false
     },
     "dataset": {
