@@ -72,6 +72,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
     save_checkpoint_path = config.training.save_checkpoint_path
+    weight_decay = config.training.weight_decay
 
     # Dataset parameters
     dataset_path = config.dataset.dataset_dir
@@ -210,7 +211,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
                                  device=device)
 
         # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
-        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay = weight_decay )
 
     # Loss functions
     criterion = nn.CrossEntropyLoss()
@@ -330,7 +331,7 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
-        if config.embeddings.use_regularization == "none":
+        if config.embeddings.use_regularization == "None":
             loss = criterion(scores.to(device), labels)
         elif config.embeddings.use_regularization == "l1":
             # Regularization on embedding weights
