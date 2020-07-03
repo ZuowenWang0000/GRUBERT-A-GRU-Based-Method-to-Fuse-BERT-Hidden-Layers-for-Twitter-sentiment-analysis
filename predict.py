@@ -122,7 +122,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
         import flair
         from flair.datasets import CSVClassificationDataset
         print("[flair] initializing datasets", flush=True)
-        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {1: "text", 2: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         eval_loader = flair.datasets.DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
         embedder = embedding.to(device)
 
@@ -140,7 +140,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
         import flair
         from flair.datasets import CSVClassificationDataset
         print("[flair] initializing datasets", flush=True)
-        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {1: "text", 2: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         eval_loader = flair.datasets.DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
         embedder = embedding.to(device)
 
