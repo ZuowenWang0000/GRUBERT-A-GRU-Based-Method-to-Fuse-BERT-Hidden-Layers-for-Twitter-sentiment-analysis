@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+from transformers import BertTokenizer
 
 from load_embeddings import *
 
@@ -81,20 +82,69 @@ class TweetsDataset(Dataset):
         return {"embeddings": embeddings.type(torch.FloatTensor),
                 "label": torch.tensor(int(label))}, tweet
 
-# from flair.embeddings import StackedEmbeddings
-# from flair.data import Sentence
 
-# class FlairDataset(Dataset):
-#     def __init__(self, dataset_path, embeddings):
-#         self.raw_tweets_with_labels = pd.read_csv(dataset_path)
-#         self.embeddings = StackedEmbeddings(embeddings=embeddings)
+class BertTwitterDataset(Dataset):
+    """Twitter dataset."""
 
-#     def __len__(self):
-#         return len(self.raw_tweets_with_labels)
+    def __init__(self, csv_file=None, tweet_data_frame=None, transform=None):
+        """
+        Args:
+            csv_file (string): Path to the csv file with twitter files.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        if csv_file is not None:
+          self.tweet_data_frame = pd.read_csv(csv_file)
+        elif tweet_data_frame is not None:
+          self.tweet_data_frame = tweet_data_frame
+        else:
+          #abcd
+          pass
 
-#     def __getitem__(self, idx):
-#         tweet = self.raw_tweets_with_labels["text"][idx]
-#         label = self.raw_tweets_with_labels["label"][idx]
+        self.transform = transform
 
-#         sentence = Sentence(tweet)
-#         self.embeddings.embed(sentence)
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+        self.tweets = self.tweet_data_frame['text']
+        self.labels = self.tweet_data_frame['label']
+        self.tweet_list = self.sentences_from_df()
+        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list,self.tokenizer))
+
+
+    def __len__(self):
+        return len(self.tweet_data_frame)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+   
+        tweet = self.tokenized_tweets[idx]
+        label = self.labels[idx]
+        sample = {'text': tweet, 'label': label}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+
+    def sentences_from_df(self):
+        sentences = []
+        for i in range(len(self.tweets)):
+          sentences.append(str(self.tweets.loc[i]))
+        return sentences
+
+    def tokenize_sentences(self,sentences, tokenizer, max_seq_len = 40):
+      """Encode sentences for using with BERT"""
+      tokenized_sentences = []
+
+      for sentence in sentences:
+          tokenized_sentence = tokenizer.encode(
+                              sentence,                  # Sentence to encode.
+                              max_length = max_seq_len,  # Truncate all sentences.
+                              pad_to_max_length=True,    # padding with zeros
+                              truncation=True
+                      )
+          tokenized_sentences.append(tokenized_sentence)
+
+      return tokenized_sentences
