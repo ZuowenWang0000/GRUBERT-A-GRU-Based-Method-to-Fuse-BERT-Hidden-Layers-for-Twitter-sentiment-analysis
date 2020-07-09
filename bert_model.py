@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertModel
 
-class bert_Model(nn.Module):
+class BertSentimentModel(nn.Module):
     def __init__(self, n_classes, emb_sizes_list, word_rnn_size=None, word_rnn_layers=None, word_att_size=None, dropout=0.5, device=None):
         super().__init__()
         # emb_sum_sizes = sum(emb_sizes_list)
@@ -11,7 +11,7 @@ class bert_Model(nn.Module):
         # self.lstm = nn.LSTM(emb_sum_sizes, word_rnn_size, bidirectional=True)
         # self.lin = nn.Linear(2*word_rnn_size, n_classes)
         self.device = device
-        self.save_hyperparameters()
+        # self.save_hyperparameters()
         self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         self.model = self.model.to(device)
 
