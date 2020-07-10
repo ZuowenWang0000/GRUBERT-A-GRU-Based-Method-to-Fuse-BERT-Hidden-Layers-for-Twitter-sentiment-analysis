@@ -110,14 +110,14 @@ def predict_flair(eval_loader, model, device, config, embedder):
 
 @click.command()
 @click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
-@click.option('--save-checkpoint-path', default='./log_dir/')
-@click.option('--prediction-file-path', default='./prediction', type=str)
+@click.option('--checkpoint', default='./log_dir/')
+@click.option('--predict-file', default='./prediction', type=str)
 @click.option('--embedding', default='elmo', type=str)
-@click.option('--use-flair', default=False, type=bool)
-@click.option('--use-bert', default=False, type=bool)
+# @click.option('--use-flair', default=False, type=bool)
+# @click.option('--use-bert', default=False, type=bool)
 
 
-def main_cli(config, save_checkpoint_path, prediction_file_path, embedding):
+def main_cli(config, checkpoint, predict_file, embedding):
     # Dataset parameters
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
