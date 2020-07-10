@@ -39,6 +39,27 @@ def predict(eval_loader, model, device, config, elmo):
         print(i)
     return results
 
+def predict_bert_mix(eval_loader, model, device, config, embedder):
+    model.eval()  # training mode enables dropout
+    results = np.array([])
+    # Batches
+    for i, data in enumerate(eval_loader):
+        # embeddings = torch.tensor(data["embeddings"])
+        x = data["text"]
+        embeddings = model.model(input_ids=x.to(device))
+
+        h0 = torch.cat(embeddings[2][1:5], 2)
+        h1 = torch.cat(embeddings[2][5:9], 2)
+        h2 = torch.cat(embeddings[2][9:13], 2)
+
+        # Forward prop.
+        scores, word_alphas, emb_weights = model([h0, h1, h2])
+
+        # Find accuracy
+        _, predictions = scores.max(dim=1)  # (n_documents)
+        results = np.concatenate((results, predictions.cpu().numpy()))
+        print(i)
+    return results
 
 
 def predict_flair(eval_loader, model, device, config, embedder):
@@ -91,11 +112,12 @@ def predict_flair(eval_loader, model, device, config, embedder):
 @click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
 @click.option('--save-checkpoint-path', default='./log_dir/')
 @click.option('--prediction-file-path', default='./prediction', type=str)
+@click.option('--embedding', default='elmo', type=str)
 @click.option('--use-flair', default=False, type=bool)
 @click.option('--use-bert', default=False, type=bool)
 
 
-def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_bert):
+def main_cli(config, save_checkpoint_path, prediction_file_path, embedding):
     # Dataset parameters
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
@@ -110,7 +132,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
     # device = "cpu"
     # setup embeddings
     
-    if use_flair:
+    if embedding=="flair":
         from flair.embeddings import WordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
@@ -129,7 +151,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
         prediction_func = predict_flair
         print("using bert embedding for testing")
 
-    elif use_bert:
+    elif embedding=="bert":
         from flair.embeddings import WordEmbeddings, ELMoEmbeddings,  TransformerWordEmbeddings, StackedEmbeddings
         print("[flair] initializing embeddings", flush=True)
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
@@ -147,7 +169,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
         prediction_func = predict_flair
         print("using bert embedding for testing")
 
-    else:
+    elif embedding=="elmo":
         import tensorflow as tf
         import tensorflow_hub as hub
         glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
@@ -164,6 +186,26 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
         # sess.run(tf.global_variables_initializer())
         embedder = ElmoEmbedding(elmo, None)
         prediction_func = predict
+    
+    elif embedding=="bert-mix":
+        from attention_network import AttentionNetwork
+        from lstm_model import LstmModel
+        from gru_model import GruModel
+        from bert_model import BertSentimentModel
+        from dataset import BertTwitterDataset
+        print("[bert-mix] initializing embeddings+dataset", flush=True)
+        # train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
+        test_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
+        # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
+        test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
+        embedder = None
+
+        prediction_func = predict_bert_mix
+        print("[bert-mix] entering training loop", flush=True)
+
+
+    else:
+        raise NotImplementedError
 
     checkpoint = torch.load(save_checkpoint_path)
     model = checkpoint['model']
@@ -173,11 +215,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
     sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
     sub.to_csv(prediction_file_path, index=False)
-<<<<<<< HEAD
-=======
 
-
->>>>>>> 9012ea662a8dc06388fa19fab3e4f9650f0dda0d
 
 if __name__ == '__main__':
     main_cli()
