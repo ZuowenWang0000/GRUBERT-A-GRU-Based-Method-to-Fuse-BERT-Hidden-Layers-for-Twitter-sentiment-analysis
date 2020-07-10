@@ -237,6 +237,9 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     model = model.to(device)
     criterion = criterion.to(device)
 
+    #initial eval
+    print("Initial evaluation:")
+    test_function(val_loader, model, criterion, device, config, writer, 0, embedder)
     # Epochs
     train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
@@ -253,7 +256,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
               embedder=embedder)
 
         # Decay learning rate every epoch
-        adjust_learning_rate(optimizer, 0.99)
+        adjust_learning_rate(optimizer, 0.9)
 
         # Save checkpoint
         if epoch % save_checkpoint_freq_epoch == 0:
