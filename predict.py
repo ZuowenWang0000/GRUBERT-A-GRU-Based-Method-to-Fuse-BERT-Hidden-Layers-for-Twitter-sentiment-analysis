@@ -172,8 +172,8 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, embedding):
     elif embedding=="elmo":
         import tensorflow as tf
         import tensorflow_hub as hub
-        glove_embedding = GloveEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut)
-        syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, val_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
+        glove_embedding = GloveEmbedding(dataset_path, train_file_path, test_file_path, sentence_length_cut)
+        syngcn_embedding = SynGcnEmbedding(dataset_path, train_file_path, test_file_path, sentence_length_cut, "../embeddings/syngcn_embeddings.txt")
 
         # dataloader
         eval_loader = torch.utils.data.DataLoader(TweetsDataset(glove_embedding.get_test_set(), syngcn_embedding.get_test_set()),
@@ -195,7 +195,7 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, embedding):
         from dataset import BertTwitterDataset
         print("[bert-mix] initializing embeddings+dataset", flush=True)
         # train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
-        test_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
+        test_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = None
