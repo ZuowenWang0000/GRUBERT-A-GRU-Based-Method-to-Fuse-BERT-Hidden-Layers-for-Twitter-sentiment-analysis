@@ -197,7 +197,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
         # train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
         test_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
-        test_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
+        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = None
 
         prediction_func = predict_bert_mix
@@ -207,14 +207,14 @@ def main_cli(config, checkpoint, predict_file, embedding):
     else:
         raise NotImplementedError
 
-    checkpoint = torch.load(save_checkpoint_path)
+    checkpoint = torch.load(checkpoint)
     model = checkpoint['model']
 
     results = prediction_func(eval_loader, model, device, config, embedder)
     results = ((results-0.5)*2)
     sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
-    sub.to_csv(prediction_file_path, index=False)
+    sub.to_csv(predict_file, index=False)
 
 
 if __name__ == '__main__':
