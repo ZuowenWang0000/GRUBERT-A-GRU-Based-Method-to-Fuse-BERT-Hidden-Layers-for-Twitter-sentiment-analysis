@@ -197,11 +197,11 @@ def main_cli(config, checkpoint, predict_file, embedding):
         # train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
         test_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
-        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
+        eval_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = None
 
         prediction_func = predict_bert_mix
-        print("[bert-mix] entering training loop", flush=True)
+        print("[bert-mix] entering testing loop", flush=True)
 
 
     else:
