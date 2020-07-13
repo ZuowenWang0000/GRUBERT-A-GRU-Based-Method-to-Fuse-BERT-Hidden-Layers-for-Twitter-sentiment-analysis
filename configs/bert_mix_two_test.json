@@ -30,8 +30,8 @@
     },
     "dataset": {
         "dataset_dir": "dataset",
-        "rel_train_path": "train_small_split.csv",
-        "rel_val_path": "val_small_split.csv",
+        "rel_train_path": "train_split.csv",
+        "rel_val_path": "val_split.csv",
         "rel_test_path": "test_cleaned.csv"
     }
 }
