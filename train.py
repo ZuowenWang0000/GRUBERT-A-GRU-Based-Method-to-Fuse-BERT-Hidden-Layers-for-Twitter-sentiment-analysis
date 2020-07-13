@@ -248,7 +248,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         print(
             '\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
-        temp_list = [e.embedding_length for e in embedding.embeddings] if (embedding != "bert-mix") or (embedding != "bert-mix2") else []
+        temp_list = []#[e.embedding_length for e in embedding.embeddings] if (embedding != "bert-mix") or (embedding != "bert-mix2") else []
         model = model_type(n_classes=n_classes,
                                  emb_sizes_list=temp_list,
                                  word_rnn_size=word_rnn_size,
