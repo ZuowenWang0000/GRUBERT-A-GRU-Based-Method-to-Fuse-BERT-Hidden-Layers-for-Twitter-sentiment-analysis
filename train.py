@@ -6,7 +6,7 @@ import torch.optim as optim
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from bert_model import BertSentimentModel, BertSentimentModelMix2
+from bert_model import BertSentimentModel, BertSentimentModelMix2, BertSentimentModelMixSix
 from dataset import BertTwitterDataset
 from utils import *
 import json
@@ -58,6 +58,9 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     elif config.model.architecture == "bert-mix2":
         print("using two groups for bert")
         model_type = BertSentimentModelMix2
+    elif config.model.architecture == "bert-mix6":
+        print("using 6 groups of 2")
+        model_type = BertSentimentModelMixSix
     else:
         raise NotImplementedError
     
@@ -171,6 +174,18 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         train_function = train_bert_mix_two
         test_function = test_bert_mix_two
         print("[bert-mix] entering training loop", flush=True)
+    elif embedding == "bert-mix6":
+        print("[bert-mix-six] initializing embeddings+dataset", flush=True)
+        train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
+        val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers,
+                                                   shuffle=False)  # should shuffle really be false? copying from the notebook
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
+        embedder = None
+
+        train_function = train_bert_mix_six
+        test_function = test_bert_mix_six
+        print("[bert-mix-six] entering training loop", flush=True)
 
 
     else:
@@ -412,6 +427,99 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
         batch_end = time.time()
         for sentence in sentences:
             sentence.clear_embeddings()
+        # print("batch time :{}".format(batch_end - batch_start))
+    # ...log the running loss, accuracy
+    print("***writing to tf board")
+    tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
+    tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
+    tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
+def train_bert_mix_six(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, embedder):
+    """
+    Performs one epoch's training.
+
+    :param train_loader: DataLoader for training data
+    :param model: model
+    :param criterion: cross entropy loss layer
+    :param optimizer: optimizer
+    :param epoch: epoch number
+    """
+
+    model.train()  # training mode enables dropout
+
+    batch_time = AverageMeter()  # forward prop. + back prop. time per batch
+    data_time = AverageMeter()  # data loading time per batch
+    losses = AverageMeter()  # cross entropy loss
+    accs = AverageMeter()  # accuracies
+
+    start = time.time()
+
+    # Batches
+    length = config.model.sentence_length_cut
+    for i, data in enumerate(train_loader):
+        # batch_start = time.time()
+        # embeddings = torch.tensor(data["embeddings"])
+        x = data["text"]
+        labels = data["label"]
+        embeddings = model.model(input_ids=x.to(device))
+        labels = labels.to(device)
+
+        #h0 = torch.cat(embeddings[2][1:5], 2)
+        #h1 = torch.cat(embeddings[2][5:9], 2)
+        #h2 = torch.cat(embeddings[2][9:13], 2)
+
+        h0 = torch.cat(embeddings[2][1:3],2)
+        h1 = torch.cat(embeddings[2][3:5],2)
+        h2 = torch.cat(embeddings[2][5:7],2)
+        h3 = torch.cat(embeddings[2][7:9],2)
+        h4 = torch.cat(embeddings[2][9:11],2)
+        h5 = torch.cat(embeddings[2][11:13],2)
+
+
+        data_time.update(time.time() - start)
+
+        # Forward prop.
+        #scores, word_alphas, emb_weights = model([h0, h1, h2])
+        scores, word_alphas, emb_weights = model([h0, h1, h2, h3, h4, h5])
+
+        if config.embeddings.use_regularization == "none":
+            loss = criterion(scores.to(device), labels)
+        else:
+            raise NotImplementedError
+
+        # Back prop.
+        optimizer.zero_grad()
+        loss.backward()
+
+        # Clip gradients
+        if config.training.grad_clip != "None":
+            clip_gradient(optimizer, config.grad_clip)
+
+        # Update
+        optimizer.step()
+
+        # Find accuracy
+        _, predictions = scores.max(dim=1)  # (n_documents)
+        correct_predictions = torch.eq(predictions, labels).sum().item()
+        accuracy = correct_predictions / labels.size(0)
+
+        # Keep track of metrics
+        losses.update(loss.item(), labels.size(0))
+        batch_time.update(time.time() - start)
+        accs.update(accuracy, labels.size(0))
+
+        start = time.time()
+
+        # Print training status
+        if i % config.training.print_freq == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                  'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                  'Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(epoch, i, len(train_loader),
+                                                                  batch_time=batch_time,
+                                                                  data_time=data_time, loss=losses,
+                                                                  acc=accs), flush=True)
+        batch_end = time.time()
         # print("batch time :{}".format(batch_end - batch_start))
     # ...log the running loss, accuracy
     print("***writing to tf board")

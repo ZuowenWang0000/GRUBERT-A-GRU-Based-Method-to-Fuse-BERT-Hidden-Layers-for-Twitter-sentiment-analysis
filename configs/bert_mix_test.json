@@ -17,7 +17,7 @@
     "training": {
         "start_epoch": 0,
         "batch_size": 64,
-        "lr": 1e-3,
+        "lr": 1e-5,
         "momentum": 0.9,
         "workers": 0,
         "epochs": 30,
