@@ -32,7 +32,7 @@ def test_bert_mix(eval_loader, model, criterion, device, config, tf_writer, epoc
     start = time.time()
 
     # Batches
-    for i, (data, tweet) in enumerate(eval_loader):
+    for i, data in enumerate(eval_loader):
         # batch_start = time.time()
         # embeddings = torch.tensor(data["embeddings"])
         x = data["text"]
@@ -89,7 +89,7 @@ def test_bert_mix_two(eval_loader, model, criterion, device, config, tf_writer, 
     start = time.time()
 
     # Batches
-    for i, (data, tweet) in enumerate(eval_loader):
+    for i, data in enumerate(eval_loader):
         # batch_start = time.time()
         # embeddings = torch.tensor(data["embeddings"])
         x = data["text"]
@@ -147,7 +147,7 @@ def test_bert_mix_six(eval_loader, model, criterion, device, config, tf_writer, 
     start = time.time()
 
     # Batches
-    for i, (data, tweet) in enumerate(eval_loader):
+    for i, data in enumerate(eval_loader):
         # batch_start = time.time()
         # embeddings = torch.tensor(data["embeddings"])
         x = data["text"]
