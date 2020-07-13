@@ -173,11 +173,6 @@ def main_cli(config, save_checkpoint_path, prediction_file_path, use_flair, use_
     sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
     sub.to_csv(prediction_file_path, index=False)
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 9012ea662a8dc06388fa19fab3e4f9650f0dda0d
 
 if __name__ == '__main__':
     main_cli()
