@@ -5,7 +5,7 @@
         "l1_lambda": 0.0001
     },
     "model": {
-        "architecture": "bert",
+        "architecture": "bert-mix2",
         "n_classes": 2,
         "word_rnn_size": 50,
         "word_rnn_layers": 1,
