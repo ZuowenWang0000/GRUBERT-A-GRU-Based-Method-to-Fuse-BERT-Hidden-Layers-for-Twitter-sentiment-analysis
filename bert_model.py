@@ -107,8 +107,8 @@ class BertSentimentModelMix2(nn.Module):
         x16 = layer16.to(self.device).permute(1, 0, 2)
         x612 = layer612.to(self.device).permute(1, 0, 2)
 
-        o1, _ = self.gru1(x16)
-        o2, _ = self.gru1(x612)
+        o1, _ = self.gru12(x16)
+        o2, _ = self.gru22(x612)
 
         x1 = torch.cat([o1, o2], 2).to(self.device)
 
