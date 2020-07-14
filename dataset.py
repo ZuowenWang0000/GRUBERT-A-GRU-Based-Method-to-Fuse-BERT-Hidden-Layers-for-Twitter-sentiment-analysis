@@ -6,7 +6,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from transformers import BertTokenizer
 
-from load_embeddings import *
+# from load_embeddings import *
 
 def tokenizer(x):
 

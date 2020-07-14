@@ -1,18 +1,14 @@
 {
-    "embeddings": {
-        "emb_sizes_list": [300, 300, 512],
-        "use_regularization": "none",
-        "l1_lambda": 0.0001
-    },
     "model": {
-        "architecture": "lstm",
+        "architecture": "LstmModel",
         "n_classes": 2,
-        "word_rnn_size": 50,
-        "word_rnn_layers": 1,
-        "word_att_size": 100,
+        "lstm_hidden_size": 50,
+        "num_lstm_layers": 1,
         "dropout": 0.3,
         "fine_tune_word_embeddings": false,
-        "sentence_length_cut": 40
+        "sentence_length_cut": 40,
+        "use_regularization": "none",
+        "regularization_lambda": 0.0001
     },
     "training": {
         "start_epoch": 0,
@@ -25,7 +21,7 @@
         "print_freq": 250,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/hornel/log_dir/pipeline_check_lstm_bs100_elmo_100_flair",
+        "save_checkpoint_path": "/cluster/scratch/__USER__/log_dir/pipeline_check_lstm_bs100_elmo_100_flair",
         "train_without_val": false
     },
     "dataset": {

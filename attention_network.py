@@ -2,38 +2,21 @@ import torch
 import torch.nn as nn
 
 class AttentionNetwork(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, word_rnn_size, word_rnn_layers, word_att_size, dropout=0.5, device=None):
+    def __init__(self, n_classes, emb_sizes_list, model_config):
         super(AttentionNetwork, self).__init__()
-        with torch.no_grad():
-            sum_sizes = sum(emb_sizes_list)
-        self.word_attention = WordAttention(sum_sizes, word_rnn_size, word_rnn_layers, word_att_size, dropout)
+        sum_sizes = sum(emb_sizes_list)
+        self.word_attention = WordAttention(sum_sizes, model_config.word_rnn_size, model_config.word_rnn_layers, model_config.word_att_size, model_config.dropout)
 
-        self.fc = nn.Linear(2 * word_rnn_size, n_classes)
-        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(2 * model_config.word_rnn_size, n_classes)
+        self.dropout = nn.Dropout(model_config.dropout)
         self.emb_weights = torch.nn.Parameter(torch.ones([sum_sizes], requires_grad=True))
 
-        # self.emb_weights = nn.Linear(sum_sizes, sum_sizes)
         self.sum_sizes = sum_sizes
-        self.counter = 0
 
     def forward(self, embeddings):
-        # TODO embedding-wise weight control with mask
-        # print("shape of embeddings {}".format(embeddings.shape))
-        # sentence_length = embeddings.shape[1]
-        # self.emb_weights = torch.relu(self.emb_weights)
-
         embeddings = torch.mul(self.emb_weights, embeddings)  # element-wise multiplication
-        # embeddings = self.emb_weights(embeddings)
-        # if self.counter % 128 == 0:
-        #     print(embeddings.grad_fn)
-        #     print("embedding weights: {}".format(self.emb_weights[0:10]))
-            # for param in self.emb_weights.parameters():
-            #     print(param.data)
-        self.counter += 1
         sentence_embedding, word_alphas = self.word_attention(embeddings)
         score = self.fc(self.dropout(sentence_embedding))
-        # print("sentence embedding shape {}".format(sentence_embedding.shape))
-        # print("score shape {}".format(score.shape))
         return score, word_alphas, self.emb_weights
 
 

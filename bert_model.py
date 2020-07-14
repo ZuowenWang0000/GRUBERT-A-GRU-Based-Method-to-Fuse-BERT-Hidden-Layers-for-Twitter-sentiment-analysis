@@ -1,30 +1,27 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import BertModel
 
 class BertSentimentModel(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, word_rnn_size=None, word_rnn_layers=None, word_att_size=None, dropout=0.5, device=None):
+    def __init__(self, n_classes, emb_sizes_list, model_config):
         super().__init__()
         # emb_sum_sizes = sum(emb_sizes_list)
         # self.emb_weights = torch.nn.Parameter(torch.ones([emb_sum_sizes], requires_grad=True))
         # self.lstm = nn.LSTM(emb_sum_sizes, word_rnn_size, bidirectional=True)
         # self.lin = nn.Linear(2*word_rnn_size, n_classes)
-        self.device = device
+        self.device = eval(model_config.device)
         # self.save_hyperparameters()
-        self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-        self.model = self.model.to(device)
 
-        self.gru1 = nn.GRU(4*768,100,bidirectional=True)
-        self.gru2 = nn.GRU(4*768,100,bidirectional=True)
-        self.gru3 = nn.GRU(4*768,100,bidirectional=True)
+        self.gru1 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
+        self.gru2 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
+        self.gru3 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
 
-        self.gru = nn.GRU(6*100, 100,bidirectional=True)
+        self.gru = nn.GRU(6*model_config.gru_hidden_size, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
         self.classifier = nn.Sequential(
-            nn.Linear(2*100, 100),
+            nn.Linear(2*model_config.gru_hidden_size, model_config.linear_hidden_size),
             nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(100, 2),
+            nn.Dropout(p=model_config.dropout),
+            nn.Linear(model_config.linear_hidden_size, n_classes),
         )
         for layer in self.classifier:
           if(isinstance(layer,nn.Linear)):
