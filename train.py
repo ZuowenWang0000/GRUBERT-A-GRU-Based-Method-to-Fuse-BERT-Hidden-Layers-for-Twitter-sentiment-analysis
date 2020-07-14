@@ -191,24 +191,14 @@ def prepare_embeddings_flair(sentences, embedder, device):
 
     all_embs = list()
     for sentence in sentences:
-        all_embs += [
-            emb for token in sentence for emb in token.get_each_embedding()
-        ]
+        all_embs += [emb for token in sentence for emb in token.get_each_embedding()]
         nb_padding_tokens = longest_token_sequence_in_batch - len(sentence)
 
         if nb_padding_tokens > 0:
-            t = pre_allocated_zero_tensor[
-                : embedder.embedding_length * nb_padding_tokens
-            ]
+            t = pre_allocated_zero_tensor[:embedder.embedding_length * nb_padding_tokens]
             all_embs.append(t)
 
-    embeddings = torch.cat(all_embs).view(
-        [
-            len(sentences),
-            longest_token_sequence_in_batch,
-            embedder.embedding_length,
-        ]
-    )
+    embeddings = torch.cat(all_embs).view([len(sentences), longest_token_sequence_in_batch, embedder.embedding_length])
 
     labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
 
@@ -272,10 +262,7 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
         optimizer.zero_grad()
         loss.backward()
 
-        # print(model.emb_weights.grad)
-
         # Clip gradients
-
         if config.training.grad_clip != "none":
             clip_gradient(optimizer, config.grad_clip)
 
@@ -311,142 +298,10 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
             pass
 
     # ...log the running loss, accuracy
-    print("***writing to tf board")
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
     tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
     tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
 
-def train_flair(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, embedder):
-    """
-    Performs one epoch's training.
-
-    :param train_loader: DataLoader for training data
-    :param model: model
-    :param criterion: cross entropy loss layer
-    :param optimizer: optimizer
-    :param epoch: epoch number
-    """
-
-    model.train()  # training mode enables dropout
-
-    batch_time = AverageMeter()  # forward prop. + back prop. time per batch
-    data_time = AverageMeter()  # data loading time per batch
-    losses = AverageMeter()  # cross entropy loss
-    accs = AverageMeter()  # accuracies
-
-    start = time.time()
-
-    # Batches
-    length = config.model.sentence_length_cut
-    for i, sentences in enumerate(train_loader):
-        # batch_start = time.time()
-        # embeddings = torch.tensor(data["embeddings"])
-
-        # Perform embedding + padding
-        embedder.embed(sentences)
-
-        lengths = [len(sentence.tokens) for sentence in sentences]
-        longest_token_sequence_in_batch: int = max(lengths)
-        pre_allocated_zero_tensor = torch.zeros(
-            embedder.embedding_length * longest_token_sequence_in_batch,
-            dtype=torch.float,
-            device=device,
-        )
-
-        all_embs = list()
-        for sentence in sentences:
-            all_embs += [
-                emb for token in sentence for emb in token.get_each_embedding()
-            ]
-            nb_padding_tokens = longest_token_sequence_in_batch - len(sentence)
-
-            if nb_padding_tokens > 0:
-                t = pre_allocated_zero_tensor[
-                    : embedder.embedding_length * nb_padding_tokens
-                ]
-                all_embs.append(t)
-
-        embeddings = torch.cat(all_embs).view(
-            [
-                len(sentences),
-                longest_token_sequence_in_batch,
-                embedder.embedding_length,
-            ]
-        )
-
-        embeddings = embeddings.to(device)
-        labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
-        # print(labels)
-        # print(labels.shape)
-        # print(embeddings.shape)
-
-        # print(elmo_embeddings.shape)
-        labels = labels.to(device)  # (batch_size)
-        # batch_load = time.time()
-        data_time.update(time.time() - start)
-
-
-        # print(embeddings.shape)
-
-        # print("batch load time:{}".format(batch_load - batch_start))
-        # Forward prop.
-        scores, word_alphas, emb_weights = model(embeddings)
-
-        if config.embeddings.use_regularization == "none":
-            loss = criterion(scores.to(device), labels)
-        elif config.embeddings.use_regularization == "l1":
-            # Regularization on embedding weights
-            emb_weights_norm = torch.norm(model.emb_weights, p=1)
-            # Loss
-            loss = criterion(scores.to(device), labels) + config.embeddings.l1_lambda * emb_weights_norm  # scalar
-        else:
-            raise NotImplementedError("Regularization other then 'none' or 'l1' not supported")
-
-        # Back prop.
-        optimizer.zero_grad()
-        loss.backward()
-
-        # print(model.emb_weights.grad)
-
-        # Clip gradients
-
-        if config.training.grad_clip!="none":
-            clip_gradient(optimizer, config.grad_clip)
-
-        # Update
-        optimizer.step()
-
-        # Find accuracy
-        _, predictions = scores.max(dim=1)  # (n_documents)
-        correct_predictions = torch.eq(predictions, labels).sum().item()
-        accuracy = correct_predictions / labels.size(0)
-
-        # Keep track of metrics
-        losses.update(loss.item(), labels.size(0))
-        batch_time.update(time.time() - start)
-        accs.update(accuracy, labels.size(0))
-
-        start = time.time()
-
-        # Print training status
-        if i % config.training.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(epoch, i, len(train_loader),
-                                                                  batch_time=batch_time,
-                                                                  data_time=data_time, loss=losses,
-                                                                  acc=accs), flush=True)
-        batch_end = time.time()
-        for sentence in sentences:
-            sentence.clear_embeddings()
-        # print("batch time :{}".format(batch_end - batch_start))
-    # ...log the running loss, accuracy
-    print("***writing to tf board")
-    tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
-    tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
-    tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
 
 def train_bert_mix(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, embedder):
     """
@@ -532,108 +387,6 @@ def train_bert_mix(train_loader, model, criterion, optimizer, epoch, device, con
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
     tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
     tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
-
-
-
-def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, embedder):
-    """
-    Performs one epoch's training.
-
-    :param train_loader: DataLoader for training data
-    :param model: model
-    :param criterion: cross entropy loss layer
-    :param optimizer: optimizer
-    :param epoch: epoch number
-    """
-
-    model.train()  # training mode enables dropout
-
-    batch_time = AverageMeter()  # forward prop. + back prop. time per batch
-    data_time = AverageMeter()  # data loading time per batch
-    losses = AverageMeter()  # cross entropy loss
-    accs = AverageMeter()  # accuracies
-
-    start = time.time()
-
-    # Batches
-    length = config.model.sentence_length_cut
-    for i, (data, tweet) in enumerate(train_loader):
-        # batch_start = time.time()
-        # embeddings = torch.tensor(data["embeddings"])
-        embeddings = data["embeddings"]
-        labels = data["label"]
-        embeddings = embeddings.to(device)
-
-
-        elmo_embeddings = torch.Tensor(embedder.embed(np.array(tweet).T, [length for _ in range(len(labels))])).to(device)
-        # print(elmo_embeddings.shape)
-        labels = labels.to(device)  # (batch_size)
-
-        embeddings = torch.cat([embeddings, elmo_embeddings], 2)
-        # batch_load = time.time()
-        data_time.update(time.time() - start)
-
-
-        # print(embeddings.shape)
-
-        # print("batch load time:{}".format(batch_load - batch_start))
-        # Forward prop.
-        scores, word_alphas, emb_weights = model(embeddings)
-
-        if config.embeddings.use_regularization == "none":
-            loss = criterion(scores.to(device), labels)
-        elif config.embeddings.use_regularization == "l1":
-            # Regularization on embedding weights
-            emb_weights_norm = torch.norm(model.emb_weights, p=1)
-            # Loss
-            loss = criterion(scores.to(device), labels) + config.embeddings.l1_lambda * emb_weights_norm  # scalar
-        else:
-            raise NotImplementedError("Regularization other than 'none' or 'l1' not supported")
-
-        # Back prop.
-        optimizer.zero_grad()
-        loss.backward()
-
-        # print(model.emb_weights.grad)
-
-        # Clip gradients
-
-        if config.training.grad_clip!="none":
-            clip_gradient(optimizer, config.grad_clip)
-
-        # Update
-        optimizer.step()
-
-        # Find accuracy
-        _, predictions = scores.max(dim=1)  # (n_documents)
-        correct_predictions = torch.eq(predictions, labels).sum().item()
-        accuracy = correct_predictions / labels.size(0)
-
-        # Keep track of metrics
-        losses.update(loss.item(), labels.size(0))
-        batch_time.update(time.time() - start)
-        accs.update(accuracy, labels.size(0))
-
-        start = time.time()
-
-        # Print training status
-        if i % config.training.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(epoch, i, len(train_loader),
-                                                                  batch_time=batch_time,
-                                                                  data_time=data_time, loss=losses,
-                                                                  acc=accs), flush=True)
-        batch_end = time.time()
-        # print("batch time :{}".format(batch_end - batch_start))
-    # ...log the running loss, accuracy
-    print("***writing to tf board")
-    tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
-    tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
-    tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
-
 
 
 @click.command()
