@@ -18,9 +18,9 @@
         "momentum": 0.9,
         "workers": 4,
         "epochs": 200,
-        "grad_clip": "None",
+        "grad_clip": "none",
         "print_freq": 200,
-        "checkpoint": "None",
+        "checkpoint": "none",
         "save_checkpoint_freq_epoch": 1,
 	"save_checkpoint_path": 
 "/cluster/scratch/__USER__/log_dir/attention-4layer-h250",

@@ -55,7 +55,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
-    save_checkpoint_path = config.training.save_checkpoint_path.replace("__USER__", user)
+    save_checkpoint_path = config.training.save_checkpoint_path.replace("__USER__", os.popen("whoami").read().strip())
     weight_decay = config.training.weight_decay
     lr_decay = config.training.lr_decay  # 0.9 originally
 
@@ -87,7 +87,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
             print("[flair] initializing ELMo embeddings", flush=True)
             embeddings_list += [ELMoEmbeddings(model="medium", embedding_mode="top")]
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
 
         embedding = StackedEmbeddings(embeddings=embeddings_list)
         print("[flair] initializing dataset", flush=True)
@@ -165,7 +165,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         print("[bert-mix] entering training loop", flush=True)
 
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Unsupported embedding: " + embedding)
 
     # else:
     #     from flair.embeddings import WordEmbeddings, ELMoEmbeddings, StackedEmbeddings
@@ -218,7 +218,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     writer = SummaryWriter(save_checkpoint_path)
 
     # Initialize model or load checkpoint
-    if checkpoint!="None":
+    if checkpoint!="none":
         checkpoint = torch.load(checkpoint)
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
@@ -312,7 +312,7 @@ def prepare_embeddings_flair(sentences, embedder, device):
 
     labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
 
-    return embeddings, labels
+    return embeddings.to(device), labels.to(device)
 
 def prepare_embeddings_bert(data, embedder, device):
     x = data["text"]
@@ -352,15 +352,13 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
 
         # Perform embedding + padding
         embeddings, labels = prepare_embeddings_fn(data, embedder, device)
-        embeddings = embeddings.to(device)
-        labels = labels.to(device)  # (batch_size)
 
         data_time.update(time.time() - start)
 
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
-        if config.model.use_regularization == "None":
+        if config.model.use_regularization == "none":
             loss = criterion(scores.to(device), labels)
         elif config.model.use_regularization == "l1":
             # Regularization on embedding weights
@@ -368,7 +366,7 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
             # Loss
             loss = criterion(scores.to(device), labels) + config.model.regularization_lambda * emb_weights_norm  # scalar
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Regularization other than 'none' or 'l1' not supported")
 
         # Back prop.
         optimizer.zero_grad()
@@ -378,7 +376,7 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
 
         # Clip gradients
 
-        if config.training.grad_clip != "None":
+        if config.training.grad_clip != "none":
             clip_gradient(optimizer, config.grad_clip)
 
         # Update
@@ -491,7 +489,7 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
         # Forward prop.
         scores, word_alphas, emb_weights = model(embeddings)
 
-        if config.embeddings.use_regularization == "None":
+        if config.embeddings.use_regularization == "none":
             loss = criterion(scores.to(device), labels)
         elif config.embeddings.use_regularization == "l1":
             # Regularization on embedding weights
@@ -499,7 +497,7 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
             # Loss
             loss = criterion(scores.to(device), labels) + config.embeddings.l1_lambda * emb_weights_norm  # scalar
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Regularization other then 'none' or 'l1' not supported")
 
         # Back prop.
         optimizer.zero_grad()
@@ -509,7 +507,7 @@ def train_flair(train_loader, model, criterion, optimizer, epoch, device, config
 
         # Clip gradients
 
-        if config.training.grad_clip!="None":
+        if config.training.grad_clip!="none":
             clip_gradient(optimizer, config.grad_clip)
 
         # Update
@@ -589,14 +587,14 @@ def train_bert_mix(train_loader, model, criterion, optimizer, epoch, device, con
         if config.embeddings.use_regularization == "none":
             loss = criterion(scores.to(device), labels)
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Regularization other than 'none' not supported")
 
         # Back prop.
         optimizer.zero_grad()
         loss.backward()
 
         # Clip gradients
-        if config.training.grad_clip != "None":
+        if config.training.grad_clip != "none":
             clip_gradient(optimizer, config.grad_clip)
 
         # Update
@@ -687,7 +685,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
             # Loss
             loss = criterion(scores.to(device), labels) + config.embeddings.l1_lambda * emb_weights_norm  # scalar
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Regularization other than 'none' or 'l1' not supported")
 
         # Back prop.
         optimizer.zero_grad()
@@ -697,7 +695,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 
         # Clip gradients
 
-        if config.training.grad_clip!="None":
+        if config.training.grad_clip!="none":
             clip_gradient(optimizer, config.grad_clip)
 
         # Update

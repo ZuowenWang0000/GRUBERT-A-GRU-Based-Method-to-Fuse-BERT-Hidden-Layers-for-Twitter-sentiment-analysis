@@ -21,9 +21,9 @@
         "momentum": 0.9,
         "workers": 8,
         "epochs": 30,
-        "grad_clip": "None",
+        "grad_clip": "none",
         "print_freq": 250,
-        "checkpoint": "None",
+        "checkpoint": "none",
         "save_checkpoint_freq_epoch": 1,
         "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/lstm_bert_bs32",
         "train_without_val": false
