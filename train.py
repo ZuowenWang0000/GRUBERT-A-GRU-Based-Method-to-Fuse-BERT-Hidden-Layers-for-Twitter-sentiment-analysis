@@ -1,24 +1,25 @@
 import time
+import os
+import sys
+import copy
+import json
+import click
+import numpy as np
+
 import torch
 import torch.nn as nn
-import torch.backends.cudnn as cudnn
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
+
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
 from bert_model import BertSentimentModel
 from dataset import BertTwitterDataset
 from utils import *
-import json
-import click
-import os
-import copy
 from test import *
-from torch.utils.tensorboard import SummaryWriter
-import sys
-import numpy as np
 
-def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=False):
+def main(config, seed=None, embedding="elmo", fine_tune=False):
     """
     Training and validation.
     """
@@ -88,7 +89,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         embedder = embedding.to(device)
-        train_function = train_flair
+
         test_function = test_flair
         prepare_embeddings_fn = prepare_embeddings_flair
 
@@ -106,7 +107,6 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
             param.requires_grad = True
         embedder = embedder.to(device)
 
-        train_function = train_bert_mix
         test_function = test_bert_mix
         prepare_embeddings_fn = prepare_embeddings_bert
         print("[bert-mix] entering training loop", flush=True)
@@ -122,14 +122,12 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         checkpoint = torch.load(checkpoint)
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
-        # word_map = checkpoint['word_map']
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
         emb_sizes_list = [e.embedding_length for e in embedding.embeddings] if embedding != "bert-mix" else []
         model = model(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
 
-        # model.sentence_attention.word_attention.fine_tune_embeddings(fine_tune_word_embeddings)  # fine-tune
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay )
 
     # Loss functions
@@ -147,7 +145,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     for epoch in range(start_epoch, epochs):
         epoch_start = time.time()
         # One epoch's training
-        train_new(train_loader=train_loader,
+        train(train_loader=train_loader,
               model=model,
               criterion=criterion,
               optimizer=optimizer,
@@ -216,7 +214,7 @@ def prepare_embeddings_bert(data, embedder, device):
 
     return [h0, h1, h2], labels
 
-def train_new(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
+def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
     """
     Performs one epoch's training.
 
@@ -237,7 +235,6 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
     start = time.time()
 
     # Batches
-    length = config.model.sentence_length_cut
     for i, data in enumerate(train_loader):
 
         # Perform embedding + padding
@@ -246,15 +243,15 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
         data_time.update(time.time() - start)
 
         # Forward prop.
-        scores, word_alphas, emb_weights = model(embeddings)
+        output = model(embeddings)
 
         if config.model.use_regularization == "none":
-            loss = criterion(scores.to(device), labels)
+            loss = criterion(output["logits"].to(device), labels)
         elif config.model.use_regularization == "l1":
             # Regularization on embedding weights
             emb_weights_norm = torch.norm(model.emb_weights, p=1)
             # Loss
-            loss = criterion(scores.to(device), labels) + config.model.regularization_lambda * emb_weights_norm  # scalar
+            loss = criterion(output["logits"].to(device), labels) + config.model.regularization_lambda * emb_weights_norm  # scalar
         else:
             raise NotImplementedError("Regularization other than 'none' or 'l1' not supported")
 
@@ -270,7 +267,7 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
         optimizer.step()
 
         # Find accuracy
-        _, predictions = scores.max(dim=1)  # (n_documents)
+        _, predictions = output["logits"].max(dim=1)  # (n_documents)
         correct_predictions = torch.eq(predictions, labels).sum().item()
         accuracy = correct_predictions / labels.size(0)
 
@@ -303,101 +300,14 @@ def train_new(train_loader, model, criterion, optimizer, epoch, device, config, 
     tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
 
 
-def train_bert_mix(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, embedder):
-    """
-    Performs one epoch's training.
-
-    :param train_loader: DataLoader for training data
-    :param model: model
-    :param criterion: cross entropy loss layer
-    :param optimizer: optimizer
-    :param epoch: epoch number
-    """
-
-    model.train()  # training mode enables dropout
-
-    batch_time = AverageMeter()  # forward prop. + back prop. time per batch
-    data_time = AverageMeter()  # data loading time per batch
-    losses = AverageMeter()  # cross entropy loss
-    accs = AverageMeter()  # accuracies
-
-    start = time.time()
-
-    # Batches
-    length = config.model.sentence_length_cut
-    for i, data in enumerate(train_loader):
-        # batch_start = time.time()
-        # embeddings = torch.tensor(data["embeddings"])
-        x = data["text"]
-        labels = data["label"]
-        embeddings = embedder(input_ids=x.to(device))
-        labels = labels.to(device)
-
-        h0 = torch.cat(embeddings[2][1:5], 2)
-        h1 = torch.cat(embeddings[2][5:9], 2)
-        h2 = torch.cat(embeddings[2][9:13], 2)
-
-        data_time.update(time.time() - start)
-
-        # Forward prop.
-        scores, word_alphas, emb_weights = model([h0, h1, h2])
-
-        if config.embeddings.use_regularization == "none":
-            loss = criterion(scores.to(device), labels)
-        else:
-            raise NotImplementedError("Regularization other than 'none' not supported")
-
-        # Back prop.
-        optimizer.zero_grad()
-        loss.backward()
-
-        # Clip gradients
-        if config.training.grad_clip != "none":
-            clip_gradient(optimizer, config.grad_clip)
-
-        # Update
-        optimizer.step()
-
-        # Find accuracy
-        _, predictions = scores.max(dim=1)  # (n_documents)
-        correct_predictions = torch.eq(predictions, labels).sum().item()
-        accuracy = correct_predictions / labels.size(0)
-
-        # Keep track of metrics
-        losses.update(loss.item(), labels.size(0))
-        batch_time.update(time.time() - start)
-        accs.update(accuracy, labels.size(0))
-
-        start = time.time()
-
-        # Print training status
-        if i % config.training.print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(epoch, i, len(train_loader),
-                                                                  batch_time=batch_time,
-                                                                  data_time=data_time, loss=losses,
-                                                                  acc=accs), flush=True)
-        batch_end = time.time()
-        # print("batch time :{}".format(batch_end - batch_start))
-    # ...log the running loss, accuracy
-    print("***writing to tf board")
-    tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
-    tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
-    tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)
-
-
 @click.command()
 @click.option('--config', default='specify_config_using_--config_option', type=str)
-@click.option('--save-checkpoint-path', default='./log_dir/')
 @click.option('--seed', default=0, type=int)
 @click.option('--embedding', default='specify_embedding_using_--embedding_option', type=str)
 @click.option('--fine-tune', default=False, type=bool)
 
-def main_cli(config, save_checkpoint_path, seed, embedding, fine_tune):
-    main(config, save_checkpoint_path, seed, embedding, fine_tune)
+def main_cli(config, seed, embedding, fine_tune):
+    main(config, seed, embedding, fine_tune)
 
 
 if __name__ == '__main__':

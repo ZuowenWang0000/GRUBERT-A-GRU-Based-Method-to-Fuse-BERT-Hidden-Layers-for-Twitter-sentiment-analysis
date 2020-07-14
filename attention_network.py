@@ -6,18 +6,16 @@ class AttentionNetwork(nn.Module):
         super(AttentionNetwork, self).__init__()
         sum_sizes = sum(emb_sizes_list)
         self.word_attention = WordAttention(sum_sizes, model_config.word_rnn_size, model_config.word_rnn_layers, model_config.word_att_size, model_config.dropout)
-
         self.fc = nn.Linear(2 * model_config.word_rnn_size, n_classes)
         self.dropout = nn.Dropout(model_config.dropout)
         self.emb_weights = torch.nn.Parameter(torch.ones([sum_sizes], requires_grad=True))
-
         self.sum_sizes = sum_sizes
 
     def forward(self, embeddings):
         embeddings = torch.mul(self.emb_weights, embeddings)  # element-wise multiplication
         sentence_embedding, word_alphas = self.word_attention(embeddings)
         score = self.fc(self.dropout(sentence_embedding))
-        return score, word_alphas, self.emb_weights
+        return {"logits": score, "word_alphas": word_alphas, "emb_weights": self.emb_weights}
 
 
 class WordAttention(nn.Module):

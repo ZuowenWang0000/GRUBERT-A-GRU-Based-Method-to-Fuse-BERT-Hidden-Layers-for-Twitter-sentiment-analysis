@@ -19,4 +19,4 @@ class GruModel(nn.Module):
         x = F.relu(x)
         x = self.lin(x)
         x = x.sum(dim=1)
-        return x, None, self.emb_weights
+        return {"logits": x}
