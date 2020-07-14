@@ -89,10 +89,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         embedder = embedding.to(device)
-
-        test_function = test_flair
         prepare_embeddings_fn = prepare_embeddings_flair
-
         print("[flair] entering training loop", flush=True)
     
     elif embedding == "bert-mix":
@@ -106,8 +103,6 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         for param in embedder.parameters():
             param.requires_grad = True
         embedder = embedder.to(device)
-
-        test_function = test_bert_mix
         prepare_embeddings_fn = prepare_embeddings_bert
         print("[bert-mix] entering training loop", flush=True)
 
@@ -128,7 +123,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         emb_sizes_list = [e.embedding_length for e in embedding.embeddings] if embedding != "bert-mix" else []
         model = model(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
 
-        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay )
+        optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 
     # Loss functions
     criterion = nn.CrossEntropyLoss()
@@ -137,9 +132,10 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     model = model.to(device)
     criterion = criterion.to(device)
 
-    #initial eval
-    # print("Initial evaluation:")
-    # test_function(val_loader, model, criterion, device, config, writer, 0, embedder)
+    # Initial eval
+    print("Initial evaluation:")
+    test(val_loader, model, criterion, device, config, writer, 0, embedder)
+
     # Epochs
     train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
@@ -163,7 +159,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
             if not train_without_val:
-                test_function(val_loader, model, criterion, device, config, writer, epoch, embedder)
+                test(val_loader, model, criterion, device, config, writer, epoch, prepare_embeddings_fn, embedder)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
         sys.stdout.flush()
@@ -172,7 +168,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     print("Total training time: {} minutes".format((train_end_time-train_start_time)/60.0))
 
     print("Final evaluation:")
-    test_function(val_loader, model, criterion, device, config, writer, epoch, embedder)
+    test(val_loader, model, criterion, device, config, writer, epoch, embedder)
     writer.close()
 
 
@@ -202,6 +198,7 @@ def prepare_embeddings_flair(sentences, embedder, device):
 
     return embeddings.to(device), labels.to(device)
 
+
 def prepare_embeddings_bert(data, embedder, device):
     x = data["text"]
     labels = data["label"]
@@ -213,6 +210,7 @@ def prepare_embeddings_bert(data, embedder, device):
     h2 = torch.cat(embeddings[2][9:13], 2)
 
     return [h0, h1, h2], labels
+
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
     """
