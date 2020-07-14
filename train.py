@@ -39,25 +39,6 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     np.random.seed(seed)
 
     print(config)
-    # embedding parameters , the center of our study
-    # emb_sizes_list = config.embeddings.emb_sizes_list
-
-    # # Model parameters
-    # if config.model.architecture == "attention":
-    #     print("using attention model")
-    #     model_type = AttentionNetwork
-    # elif config.model.architecture == "lstm":
-    #     print("using lstm model")
-    #     model_type = LstmModel
-    # elif config.model.architecture == "gru":
-    #     print("using gru architecture")
-    #     model_type = GruModel
-    # elif config.model.architecture == "bert":
-    #     print("using bert architecture")
-    #     model_type = BertSentimentModel
-    # else:
-    #     raise NotImplementedError
-    
     model = eval(config.model.architecture)
 
     n_classes = config.model.n_classes
@@ -117,6 +98,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         embedder = embedding.to(device)
         train_function = train_flair
         test_function = test_flair
+        prepare_embeddings_fn = prepare_embeddings_flair
 
         print("[flair] entering training loop", flush=True)
 
@@ -173,10 +155,13 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        for param in embedder.parameters():
+            param.requires_grad = True
         embedder = embedder.to(device)
 
         train_function = train_bert_mix
         test_function = test_bert_mix
+        prepare_embeddings_fn = prepare_embeddings_bert
         print("[bert-mix] entering training loop", flush=True)
 
     else:
@@ -255,14 +240,14 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
     criterion = criterion.to(device)
 
     #initial eval
-    print("Initial evaluation:")
-    test_function(val_loader, model, criterion, device, config, writer, 0, embedder)
+    # print("Initial evaluation:")
+    # test_function(val_loader, model, criterion, device, config, writer, 0, embedder)
     # Epochs
     train_start_time = time.time()
     for epoch in range(start_epoch, epochs):
         epoch_start = time.time()
         # One epoch's training
-        train_function(train_loader=train_loader,
+        train_new(train_loader=train_loader,
               model=model,
               criterion=criterion,
               optimizer=optimizer,
@@ -270,6 +255,7 @@ def main(config, save_checkpoint_path, seed=None, embedding="elmo", fine_tune=Fa
               device=device,
               config=config,
               tf_writer=writer,
+              prepare_embeddings_fn=prepare_embeddings_fn,
               embedder=embedder)
 
         # Decay learning rate every epoch

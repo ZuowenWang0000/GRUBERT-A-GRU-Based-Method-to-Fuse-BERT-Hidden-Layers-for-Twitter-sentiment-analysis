@@ -27,8 +27,8 @@ class BertSentimentModel(nn.Module):
           if(isinstance(layer,nn.Linear)):
             torch.nn.init.xavier_normal_(layer.weight)
 
-        for param in self.model.parameters():
-          param.requires_grad = True
+        # for param in self.model.parameters():
+        #   param.requires_grad = True
     
     
     def forward(self, embeddings):
