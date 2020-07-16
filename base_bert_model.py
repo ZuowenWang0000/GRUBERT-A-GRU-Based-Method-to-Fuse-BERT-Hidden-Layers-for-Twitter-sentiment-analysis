@@ -12,8 +12,8 @@ class BertSentimentModel(nn.Module):
         # self.lin = nn.Linear(2*word_rnn_size, n_classes)
         self.device = device
         # self.save_hyperparameters()
-        # self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-        self.model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states=True)
+        self.model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        # self.model = BertModel.from_pretrained('bert-base-multilingual-cased', output_hidden_states=True)
         self.model = self.model.to(device)
 
         self.gru1 = nn.GRU(4*768,100,bidirectional=True)

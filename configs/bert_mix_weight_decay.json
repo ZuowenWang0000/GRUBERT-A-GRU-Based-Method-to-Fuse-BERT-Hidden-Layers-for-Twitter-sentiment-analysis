@@ -19,15 +19,15 @@
         "batch_size": 64,
         "lr": 1e-5,
         "momentum": 0.9,
-        "workers": 0,
+        "workers": 4,
         "epochs": 30,
         "grad_clip": "None",
         "print_freq": 250,
         "checkpoint": "None",
         "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/mix_bert_bs64",
+        "save_checkpoint_path": "/cluster/scratch/wangzu/log_dir/mix_bert_bs64_weight_decay_e5",
         "train_without_val": false,
-        "weight_decay":0.0
+        "weight_decay":0.00001
     },
     "dataset": {
         "dataset_dir": "../dataset",

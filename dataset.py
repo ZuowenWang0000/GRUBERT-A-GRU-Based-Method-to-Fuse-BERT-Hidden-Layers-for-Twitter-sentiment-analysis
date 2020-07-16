@@ -104,6 +104,8 @@ class BertTwitterDataset(Dataset):
         self.transform = transform
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        # print("using multilingual bert!", flush=True)
+        # self.tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
 
         self.tweets = self.tweet_data_frame['text']
         self.labels = self.tweet_data_frame['label']
