@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from bert_model import BertSentimentModel
+from bert_model import BertSentimentModel, BertBaseModel, BertLastFourModel
 from dataset import BertTwitterDataset
 from utils import *
 from test import *
@@ -62,7 +62,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
 
     print("Checkpoints will be saved in: %s" % save_checkpoint_path, flush=True)
 
-    if embedding in ["flair","bert", "elmo"]:
+    if embedding in ["flair", "bert", "elmo"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
@@ -92,7 +92,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         prepare_embeddings_fn = prepare_embeddings_flair
         print("[flair] entering training loop", flush=True)
     
-    elif embedding == "bert-mix":
+    elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
         from transformers import BertModel
         print("[bert-mix] initializing embeddings+dataset", flush=True)
         train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
@@ -103,8 +103,13 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         for param in embedder.parameters():
             param.requires_grad = True
         embedder = embedder.to(device)
-        prepare_embeddings_fn = prepare_embeddings_bert
-        print("[bert-mix] entering training loop", flush=True)
+        if embedding == "bert-mix":
+            prepare_embeddings_fn = prepare_embeddings_bert_mix
+        elif embedding == "bert-base":
+            prepare_embeddings_fn = prepare_embeddings_bert_base
+        elif embedding == "bert-last-four":
+            prepare_embeddings_fn = prepare_embeddings_bert_last_four
+        print("["+embedding+"]"+"entering training loop", flush=True)
 
     else:
         raise NotImplementedError("Unsupported embedding: " + embedding)
@@ -182,34 +187,42 @@ def prepare_embeddings_flair(sentences, embedder, device):
         dtype=torch.float,
         device=device,
     )
-
     all_embs = list()
     for sentence in sentences:
         all_embs += [emb for token in sentence for emb in token.get_each_embedding()]
         nb_padding_tokens = longest_token_sequence_in_batch - len(sentence)
-
         if nb_padding_tokens > 0:
             t = pre_allocated_zero_tensor[:embedder.embedding_length * nb_padding_tokens]
             all_embs.append(t)
-
     embeddings = torch.cat(all_embs).view([len(sentences), longest_token_sequence_in_batch, embedder.embedding_length])
-
     labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
-
     return embeddings.to(device), labels.to(device)
 
-
-def prepare_embeddings_bert(data, embedder, device):
+def prepare_embeddings_bert_mix(data, embedder, device):
     x = data["text"]
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
     labels = labels.to(device)
-
     h0 = torch.cat(embeddings[2][1:5], 2)
     h1 = torch.cat(embeddings[2][5:9], 2)
     h2 = torch.cat(embeddings[2][9:13], 2)
-
     return [h0, h1, h2], labels
+
+def prepare_embeddings_bert_base(data, embedder, device):
+    x = data["text"]
+    labels = data["label"]
+    embeddings = embedder(input_ids=x.to(device))
+    labels = labels.to(device)
+    h2 = torch.cat(embeddings[2][12], 2)
+    return [h2], labels
+
+def prepare_embeddings_bert_last_four(data, embedder, device):
+    x = data["text"]
+    labels = data["label"]
+    embeddings = embedder(input_ids=x.to(device))
+    labels = labels.to(device)
+    h2 = torch.cat(embeddings[2][9:13], 2)
+    return [h2], labels
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
@@ -222,7 +235,6 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     :param optimizer: optimizer
     :param epoch: epoch number
     """
-
     model.train()  # training mode enables dropout
 
     batch_time = AverageMeter()  # forward prop. + back prop. time per batch
@@ -231,13 +243,11 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     accs = AverageMeter()  # accuracies
 
     start = time.time()
-
     # Batches
     for i, data in enumerate(train_loader):
 
         # Perform embedding + padding
         embeddings, labels = prepare_embeddings_fn(data, embedder, device)
-
         data_time.update(time.time() - start)
 
         # Forward prop.

@@ -43,3 +43,70 @@ class BertSentimentModel(nn.Module):
         x = x.sum(dim=1)
 
         return {"logits": x}
+
+
+class BertBaseModel(nn.Module):
+    def __init__(self, n_classes, emb_sizes_list, model_config):
+        super().__init__()
+        self.device = eval(model_config.device)
+
+        self.gru1 = nn.GRU(768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
+                           bidirectional=True)
+        self.gru = nn.GRU(2 * model_config.gru_hidden_size, model_config.gru_hidden_size,
+                          num_layers=model_config.num_gru_layers, bidirectional=True)
+        self.classifier = nn.Sequential(
+            nn.Linear(2 * model_config.gru_hidden_size, model_config.linear_hidden_size),
+            nn.ReLU(),
+            nn.Dropout(p=model_config.dropout),
+            nn.Linear(model_config.linear_hidden_size, n_classes),
+        )
+        for layer in self.classifier:
+            if (isinstance(layer, nn.Linear)):
+                torch.nn.init.xavier_normal_(layer.weight)
+
+    def forward(self, embeddings):
+        # embeddings = [layer]
+        layer = embeddings[0]
+        x = layer.to(self.device).permute(1, 0, 2)
+        o1, _ = self.gru1(x)
+
+        x1 = o1.to(self.device)
+
+        x, _ = self.gru(x1)
+        x = F.relu(x.permute(1, 0, 2))
+        x = self.classifier(x)
+        x = x.sum(dim=1)
+        return {"logits": x}
+
+class BertLastFourModel(nn.Module):
+    def __init__(self, n_classes, emb_sizes_list, model_config):
+        super().__init__()
+        self.device = eval(model_config.device)
+
+        self.gru1 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
+                           bidirectional=True)
+        self.gru = nn.GRU(2 * model_config.gru_hidden_size, model_config.gru_hidden_size,
+                          num_layers=model_config.num_gru_layers, bidirectional=True)
+        self.classifier = nn.Sequential(
+            nn.Linear(2 * model_config.gru_hidden_size, model_config.linear_hidden_size),
+            nn.ReLU(),
+            nn.Dropout(p=model_config.dropout),
+            nn.Linear(model_config.linear_hidden_size, n_classes),
+        )
+        for layer in self.classifier:
+            if (isinstance(layer, nn.Linear)):
+                torch.nn.init.xavier_normal_(layer.weight)
+
+    def forward(self, embeddings):
+        # embeddings = [layer]
+        layer = embeddings[0]
+        x = layer.to(self.device).permute(1, 0, 2)
+        o1, _ = self.gru1(x)
+
+        x1 = o1.to(self.device)
+
+        x, _ = self.gru(x1)
+        x = F.relu(x.permute(1, 0, 2))
+        x = self.classifier(x)
+        x = x.sum(dim=1)
+        return {"logits": x}
