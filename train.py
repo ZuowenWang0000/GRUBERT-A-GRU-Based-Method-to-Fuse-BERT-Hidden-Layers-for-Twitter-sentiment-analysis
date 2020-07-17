@@ -139,7 +139,8 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
 
     # Initial eval
     print("Initial evaluation:")
-    test(val_loader, model, criterion, device, config, writer, 0, embedder)
+    # test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
+    test(val_loader, model, criterion, optimizer, 0, device, config, writer, prepare_embeddings_fn, embedder)
 
     # Epochs
     train_start_time = time.time()
@@ -164,7 +165,9 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
             if not train_without_val:
-                test(val_loader, model, criterion, device, config, writer, epoch, prepare_embeddings_fn, embedder)
+                test(val_loader, model, criterion, optimizer, epoch, device, config, writer, prepare_embeddings_fn,
+                     embedder)
+                # test(val_loader, model, criterion, device, config, writer, epoch, prepare_embeddings_fn, embedder)
         epoch_end = time.time()
         print("per epoch time = {}".format(epoch_end-epoch_start))
         sys.stdout.flush()
@@ -173,7 +176,8 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     print("Total training time: {} minutes".format((train_end_time-train_start_time)/60.0))
 
     print("Final evaluation:")
-    test(val_loader, model, criterion, device, config, writer, epoch, embedder)
+    test(val_loader, model, criterion, optimizer, epoch, device, config, writer, prepare_embeddings_fn, embedder)
+    # test(val_loader, model, criterion, device, config, writer, epoch, embedder)
     writer.close()
 
 
