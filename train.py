@@ -101,7 +101,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         for param in embedder.parameters():
-            param.requires_grad = True
+            param.requires_grad = True # todo: replace this by fine_tune？ ZUOWEN
         embedder = embedder.to(device)
         if embedding == "bert-mix":
             prepare_embeddings_fn = prepare_embeddings_bert_mix
@@ -138,9 +138,9 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     criterion = criterion.to(device)
 
     # Initial eval
-    print("Initial evaluation:")
+    # print("Initial evaluation:")
     # test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
-    test(val_loader, model, criterion, optimizer, 0, device, config, writer, prepare_embeddings_fn, embedder)
+    # test(val_loader, model, criterion, optimizer, 0, device, config, writer, prepare_embeddings_fn, embedder)
 
     # Epochs
     train_start_time = time.time()
