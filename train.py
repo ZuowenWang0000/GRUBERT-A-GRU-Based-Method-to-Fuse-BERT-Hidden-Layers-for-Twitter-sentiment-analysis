@@ -49,7 +49,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
-    save_checkpoint_path = config.training.save_checkpoint_path.replace("__USER__", os.popen("whoami").read().strip()) + f"seed{seed}"
+    save_checkpoint_path = config.training.save_checkpoint_path.replace("__USER__", os.popen("whoami").read().strip()) + f"_seed{seed}"
     weight_decay = config.training.weight_decay
     lr_decay = config.training.lr_decay  # 0.9 originally
 
