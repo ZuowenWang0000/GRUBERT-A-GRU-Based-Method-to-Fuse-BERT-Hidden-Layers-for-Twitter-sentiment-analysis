@@ -221,7 +221,8 @@ def prepare_embeddings_bert_base(data, embedder, device):
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
     labels = labels.to(device)
-    h2 = torch.cat(embeddings[2][12], 2)
+    # h2 = torch.cat(embeddings[2][12], 2)
+    h2 = embeddings[2][12]
     return [h2], labels
 
 def prepare_embeddings_bert_last_four(data, embedder, device):
