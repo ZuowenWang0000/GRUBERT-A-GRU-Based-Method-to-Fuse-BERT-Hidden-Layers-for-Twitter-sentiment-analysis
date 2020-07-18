@@ -1,11 +1,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from transformers import BertModel
 
 class BertSentimentModel(nn.Module):
     def __init__(self, n_classes, emb_sizes_list, model_config):
         super().__init__()
         self.device = eval(model_config.device)
+
+        self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        self.embedder = self.embedder.to(self.device)
 
         self.gru1 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
         self.gru2 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True)
@@ -19,8 +23,11 @@ class BertSentimentModel(nn.Module):
             nn.Linear(model_config.linear_hidden_size, n_classes),
         )
         for layer in self.classifier:
-          if(isinstance(layer,nn.Linear)):
-            torch.nn.init.xavier_normal_(layer.weight)
+            if (isinstance(layer,nn.Linear)):
+                torch.nn.init.xavier_normal_(layer.weight)
+
+        for param in self.embedder.parameters():
+            param.requires_grad = True # todo: replace this by fine_tune？ ZUOWEN
     
     def forward(self, embeddings):
         # embeddings = [layer14, layer58, layer912]
@@ -50,6 +57,9 @@ class BertBaseModel(nn.Module):
         super().__init__()
         self.device = eval(model_config.device)
 
+        self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        self.embedder = self.embedder.to(self.device)
+
         self.gru1 = nn.GRU(768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
                            bidirectional=True)
         self.gru = nn.GRU(2 * model_config.gru_hidden_size, model_config.gru_hidden_size,
@@ -63,6 +73,9 @@ class BertBaseModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
+
+        for param in self.embedder.parameters():
+            param.requires_grad = True # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer]
@@ -83,6 +96,9 @@ class BertLastFourModel(nn.Module):
         super().__init__()
         self.device = eval(model_config.device)
 
+        self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        self.embedder = self.embedder.to(self.device)
+
         self.gru1 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
                            bidirectional=True)
         self.gru = nn.GRU(2 * model_config.gru_hidden_size, model_config.gru_hidden_size,
@@ -96,6 +112,9 @@ class BertLastFourModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
+
+        for param in self.embedder.parameters():
+            param.requires_grad = True # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer]

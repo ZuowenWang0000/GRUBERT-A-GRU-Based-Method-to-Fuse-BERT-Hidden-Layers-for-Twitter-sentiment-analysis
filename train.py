@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
+import torch.backends.cudnn as cudnn
 
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
@@ -32,7 +33,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     np.random.seed(seed)
 
     print(config)
-    model = eval(config.model.architecture)
+    model_type = eval(config.model.architecture)
 
     n_classes = config.model.n_classes
     fine_tune_word_embeddings = config.model.fine_tune_word_embeddings  # fine-tune word embeddings?
@@ -57,6 +58,8 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     train_file_path = config.dataset.rel_train_path
     val_file_path = config.dataset.rel_val_path
     test_file_path = config.dataset.rel_test_path
+
+    cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -93,16 +96,12 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         print("[flair] entering training loop", flush=True)
     
     elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
-        from transformers import BertModel
         print("["+embedding+"]"+" initializing embeddings+dataset", flush=True)
         train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
         val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
-        embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-        for param in embedder.parameters():
-            param.requires_grad = True # todo: replace this by fine_tune？ ZUOWEN
-        embedder = embedder.to(device)
+        embedder = None  # embedder in model
         if embedding == "bert-mix":
             prepare_embeddings_fn = prepare_embeddings_bert_mix
         elif embedding == "bert-base":
@@ -118,7 +117,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     writer = SummaryWriter(save_checkpoint_path)
 
     # Initialize model or load checkpoint
-    if checkpoint!="none":
+    if checkpoint != "none":
         checkpoint = torch.load(checkpoint)
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
@@ -126,7 +125,10 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
     else:
         emb_sizes_list = [e.embedding_length for e in embedding.embeddings] if embedding not in ["bert-base", "bert-mix","bert-last-four"] else []
-        model = model(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
+        model = model_type(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
+        if hasattr(model, "embedder"):
+            print("Model has built-in embedder, using it")
+            embedder = model.embedder
 
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 
