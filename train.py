@@ -96,7 +96,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         print("[flair] entering training loop", flush=True)
     
     elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
-        print("["+embedding+"]"+" initializing embeddings+dataset", flush=True)
+        print("[" + embedding + "]" + " initializing embeddings+dataset", flush=True)
         train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
         val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
@@ -108,7 +108,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
             prepare_embeddings_fn = prepare_embeddings_bert_base
         elif embedding == "bert-last-four":
             prepare_embeddings_fn = prepare_embeddings_bert_last_four
-        print("["+embedding+"]"+"entering training loop", flush=True)
+        print("[" + embedding + "]" + " entering training loop", flush=True)
 
     else:
         raise NotImplementedError("Unsupported embedding: " + embedding)
@@ -122,13 +122,15 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
         start_epoch = checkpoint['epoch'] + 1
-        print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1))
+        print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1), flush=True)
     else:
         emb_sizes_list = [e.embedding_length for e in embedding.embeddings] if embedding not in ["bert-base", "bert-mix","bert-last-four"] else []
         model = model_type(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
         if hasattr(model, "embedder"):
-            print("Model has built-in embedder, using it")
+            print("Model has built-in embedder, using it", flush=True)
             embedder = model.embedder
+        else:
+            print("Using user-defined embedder", flush=True)
 
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
 
