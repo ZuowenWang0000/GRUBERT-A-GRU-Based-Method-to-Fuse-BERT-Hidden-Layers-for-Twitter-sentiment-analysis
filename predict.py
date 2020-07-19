@@ -115,7 +115,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
 
         embedding = StackedEmbeddings(embeddings=embeddings_list)
         print("[flair] initializing dataset", flush=True)
-        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {1: "text", 2: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {1: "text", 2: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         eval_loader = flair.datasets.DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
         embedder = embedding.to(device)
         prepare_embeddings_fn = prepare_embeddings_flair
@@ -124,7 +124,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
     elif embedding == "bert-mix":
         from transformers import BertModel
         print("[bert-mix] initializing embeddings+dataset", flush=True)
-        eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
+        eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         for param in embedder.parameters():
