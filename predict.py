@@ -137,12 +137,12 @@ def main_cli(config, checkpoint, predict_file, embedding):
         print("[flair] entering prediction loop", flush=True)
     
     elif embedding in ["bert-mix", "bert-base", "bert-last-four"]:
-        print("[bert-mix] initializing embeddings+dataset", flush=True)
+        print(f"[{embedding}] initializing embeddings+dataset", flush=True)
         eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         embedder = None  # Model has built-in embedder
         prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
-        print("[bert-mix] entering prediction loop", flush=True)
+        print(f"{embedding} entering prediction loop", flush=True)
 
     else:
         raise NotImplementedError("Unsupported embedding: " + embedding)

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertModel
 
-class BertSentimentModel(nn.Module):
+class BertMixModel(nn.Module):
     def __init__(self, n_classes, emb_sizes_list, model_config):
         super().__init__()
         self.device = eval(model_config.device)

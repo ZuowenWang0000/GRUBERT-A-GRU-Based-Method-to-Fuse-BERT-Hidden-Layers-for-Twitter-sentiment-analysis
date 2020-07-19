@@ -86,7 +86,7 @@ class TweetsDataset(Dataset):
 class BertTwitterDataset(Dataset):
     """Twitter dataset."""
 
-    def __init__(self, csv_file=None, tweet_data_frame=None, transform=None):
+    def __init__(self, csv_file=None, tweet_data_frame=None, transform=None, sentence_length_cut=40):
         """
         Args:
             csv_file (string): Path to the csv file with twitter files.
@@ -108,7 +108,7 @@ class BertTwitterDataset(Dataset):
         self.tweets = self.tweet_data_frame['text']
         self.labels = self.tweet_data_frame['label']
         self.tweet_list = self.sentences_from_df()
-        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list,self.tokenizer))
+        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list, self.tokenizer, max_seq_len=sentence_length_cut))
 
 
     def __len__(self):
@@ -134,7 +134,7 @@ class BertTwitterDataset(Dataset):
           sentences.append(str(self.tweets.loc[i]))
         return sentences
 
-    def tokenize_sentences(self,sentences, tokenizer, max_seq_len = 40):
+    def tokenize_sentences(self,sentences, tokenizer, max_seq_len=40):
       """Encode sentences for using with BERT"""
       tokenized_sentences = []
 

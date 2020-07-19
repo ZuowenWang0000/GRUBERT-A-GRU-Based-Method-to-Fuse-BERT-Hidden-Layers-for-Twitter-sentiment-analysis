@@ -15,12 +15,12 @@ import torch.backends.cudnn as cudnn
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from bert_model import BertSentimentModel, BertBaseModel, BertLastFourModel
+from bert_model import BertMixModel, BertBaseModel, BertLastFourModel
 from dataset import BertTwitterDataset
 from utils import *
 from test import *
 
-def main(config, seed=None, embedding="elmo", fine_tune=False):
+def main(config, seed=None, embedding="bert-mix"):
     """
     Training and validation.
     """
@@ -36,7 +36,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     model_type = eval(config.model.architecture)
 
     n_classes = config.model.n_classes
-    fine_tune_word_embeddings = config.model.fine_tune_word_embeddings  # fine-tune word embeddings?
+    fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
 
     # Training parameters
@@ -75,10 +75,10 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
 
         if embedding == "flair":
             print("[flair] initializing Flair embeddings", flush=True)
-            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune), FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune)]
+            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune_embeddings)]
         elif embedding == "bert":
             print("[flair] initializing Bert embeddings", flush=True)
-            embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune)]
+            embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune_embeddings)]
         elif embedding == "elmo":
             print("[flair] initializing ELMo embeddings", flush=True)
             embeddings_list += [ELMoEmbeddings(model="medium", embedding_mode="top")]
@@ -97,8 +97,8 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
     
     elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
         print("[" + embedding + "]" + " initializing embeddings+dataset", flush=True)
-        train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path))
-        val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path))
+        train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path), sentence_length_cut=sentence_length_cut)
+        val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path), sentence_length_cut=sentence_length_cut)
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = None  # embedder in model
@@ -316,10 +316,9 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 @click.option('--config', default='specify_config_using_--config_option', type=str)
 @click.option('--seed', default=0, type=int)
 @click.option('--embedding', default='specify_embedding_using_--embedding_option', type=str)
-@click.option('--fine-tune', default=False, type=bool)
 
-def main_cli(config, seed, embedding, fine_tune):
-    main(config, seed, embedding, fine_tune)
+def main_cli(config, seed, embedding):
+    main(config, seed, embedding)
 
 
 if __name__ == '__main__':
