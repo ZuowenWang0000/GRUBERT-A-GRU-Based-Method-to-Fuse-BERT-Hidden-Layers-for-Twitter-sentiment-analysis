@@ -102,12 +102,7 @@ def main(config, seed=None, embedding="elmo", fine_tune=False):
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         embedder = None  # embedder in model
-        if embedding == "bert-mix":
-            prepare_embeddings_fn = prepare_embeddings_bert_mix
-        elif embedding == "bert-base":
-            prepare_embeddings_fn = prepare_embeddings_bert_base
-        elif embedding == "bert-last-four":
-            prepare_embeddings_fn = prepare_embeddings_bert_last_four
+        prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
         print("[" + embedding + "]" + " entering training loop", flush=True)
 
     else:
