@@ -136,8 +136,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
         prepare_embeddings_fn = prepare_embeddings_flair
         print("[flair] entering prediction loop", flush=True)
     
-    elif embedding == "bert-mix":
-        from transformers import BertModel
+    elif embedding in ["bert-mix", "bert-base", "bert-last-four"]:
         print("[bert-mix] initializing embeddings+dataset", flush=True)
         eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
