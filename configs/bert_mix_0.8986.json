@@ -1,12 +1,13 @@
 {
     "model": {
-        "architecture": "BertSentimentModel",
+        "architecture": "BertMixModel",
         "n_classes": 2,
         "gru_hidden_size": 100,
         "num_gru_layers": 1,
+        "num_grus": 3,
         "linear_hidden_size": 100,
         "dropout": 0.5,
-        "fine_tune_word_embeddings": false,
+        "fine_tune_embeddings": true,
         "sentence_length_cut": 40,
         "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",
         "use_regularization": "none",

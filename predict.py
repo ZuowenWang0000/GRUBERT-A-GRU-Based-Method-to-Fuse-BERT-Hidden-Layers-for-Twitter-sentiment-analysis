@@ -38,7 +38,7 @@ def prepare_embeddings_flair(sentences, embedder, device):
     return embeddings.to(device)
 
 
-def prepare_embeddings_bert(data, embedder, device):
+def prepare_embeddings_bert_mix(data, embedder, device):
     x = data["text"]
     embeddings = embedder(input_ids=x.to(device))
 
@@ -47,6 +47,21 @@ def prepare_embeddings_bert(data, embedder, device):
     h2 = torch.cat(embeddings[2][9:13], 2)
 
     return [h0, h1, h2]
+
+
+def prepare_embeddings_bert_base(data, embedder, device):
+    x = data["text"]
+    embeddings = embedder(input_ids=x.to(device))
+    # h2 = torch.cat(embeddings[2][12], 2)
+    h2 = embeddings[2][12]
+    return [h2]
+
+
+def prepare_embeddings_bert_last_four(data, embedder, device):
+    x = data["text"]
+    embeddings = embedder(input_ids=x.to(device))
+    h2 = torch.cat(embeddings[2][9:13], 2)
+    return [h2]
 
 
 def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder):
@@ -121,23 +136,24 @@ def main_cli(config, checkpoint, predict_file, embedding):
         prepare_embeddings_fn = prepare_embeddings_flair
         print("[flair] entering prediction loop", flush=True)
     
-    elif embedding == "bert-mix":
-        from transformers import BertModel
-        print("[bert-mix] initializing embeddings+dataset", flush=True)
+    elif embedding in ["bert-mix", "bert-base", "bert-last-four"]:
+        print(f"[{embedding}] initializing embeddings+dataset", flush=True)
         eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
-        embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-        for param in embedder.parameters():
-            param.requires_grad = True
-        embedder = embedder.to(device)
-        prepare_embeddings_fn = prepare_embeddings_bert
-        print("[bert-mix] entering prediction loop", flush=True)
+        embedder = None  # Model has built-in embedder
+        prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
+        print(f"{embedding} entering prediction loop", flush=True)
 
     else:
         raise NotImplementedError("Unsupported embedding: " + embedding)
 
     checkpoint = torch.load(checkpoint)
     model = checkpoint['model']
+    if hasattr(model, "embedder"):
+        print("Model has built-in embedder, using it", flush=True)
+        embedder = model.embedder
+    else:
+        print("Using user-defined embedder", flush=True)
 
     results = predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
     results = ((results-0.5)*2)

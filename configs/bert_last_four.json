@@ -6,7 +6,7 @@
         "num_gru_layers": 1,
         "linear_hidden_size": 100,
         "dropout": 0.5,
-        "fine_tune_word_embeddings": false,
+        "fine_tune_embeddings": true,
         "sentence_length_cut": 40,
         "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",
         "use_regularization": "none",

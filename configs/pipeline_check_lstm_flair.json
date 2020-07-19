@@ -5,7 +5,7 @@
         "lstm_hidden_size": 50,
         "num_lstm_layers": 1,
         "dropout": 0.3,
-        "fine_tune_word_embeddings": false,
+        "fine_tune_embeddings": false,
         "sentence_length_cut": 40,
         "use_regularization": "none",
         "regularization_lambda": 0.0001

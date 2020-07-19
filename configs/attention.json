@@ -6,7 +6,7 @@
         "word_rnn_layers": 1,
         "word_att_size": 100,
         "dropout": 0.3,
-        "fine_tune_word_embeddings": false,
+        "fine_tune_embeddings": false,
         "sentence_length_cut": 40,
         "use_regularization": "none",
         "regularization_lambda": 0.0001
