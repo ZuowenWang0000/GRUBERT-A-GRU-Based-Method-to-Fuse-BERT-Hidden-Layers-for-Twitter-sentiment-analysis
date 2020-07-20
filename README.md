@@ -1,20 +1,26 @@
 # Preparations
 
 ## Dependencies 
-Run 
+For Leonhard users, to install dependencies, please first execute
 ```
-pip install --user requirment.txt
+module load eth_proxy
+module load gcc/6.3.0 python_gpu/3.7.4 hdf5
+```
+Then one can use pip to install
+```
+pip3 install --user requirment.txt
 ```
 to install the dependencies needed. Virtual environment is recommended.
 
 ## Dataset
 Download the tweet datasets from here:
 https://polybox.ethz.ch/index.php/apps/files/?dir=/CIL/dataset/final_dataset&fileid=1951904263
+
 This link contains a train split, a validation split and a test split (label unknown). The train and validation splits are created by spliting the original training set provided by the ETH CIL course team.
 These datasets are preprocessed using the same preprocessing procedure described in the report (section?).
 
 # Training
-## For Leonhard users
+For Leonhard users please execute train.sh with flags:
 ```
 ./train.sh --config config/the_experiment_config_file.json --embedding [bert_base, bert_mix, bert_last_four] 
 ```
@@ -22,7 +28,7 @@ These datasets are preprocessed using the same preprocessing procedure described
 For non-Leonhard users please execute the python train.py script. Flags are the same as on Leonhard.
 
 
-an example for a quick start:
+an example for a quick start on Leonhard:
 ```
 ./train.sh --config config/bert_mix.json --embedding bert_mix --seed 0
 ```
