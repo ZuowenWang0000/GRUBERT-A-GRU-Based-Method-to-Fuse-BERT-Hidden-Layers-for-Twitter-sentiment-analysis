@@ -33,7 +33,7 @@ class BertMixModel(nn.Module):
     
     def forward(self, embeddings):
         temp = [embeddings[i].to(self.device).permute(1, 0, 2) for i in range(self.num_grus)]
-        out = [self.grus[i](temp[i])[0] for i in range(self.num_grus)]
+        out = [self.grus[i].to(self.device)(temp[i])[0] for i in range(self.num_grus)]
 
         x1 = torch.cat(out, 2).to(self.device)
         x, _ = self.gru(x1)
@@ -166,6 +166,10 @@ class BertSentimentModel(nn.Module):
         o1, _ = self.gru1(x14)
         o2, _ = self.gru1(x58)
         o3, _ = self.gru1(x912)
+
+        #o2, _ = self.gru2(x58)
+        #o3, _ = self.gru3(x912)
+
 
         x1 = torch.cat([o1, o2, o3], 2).to(self.device)
 
