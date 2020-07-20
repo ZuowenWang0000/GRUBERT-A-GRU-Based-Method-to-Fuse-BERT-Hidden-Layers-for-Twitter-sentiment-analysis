@@ -30,5 +30,43 @@ predict.sh script and specify the config file, checkpoint path and the file name
 # Configuration (detailed explanation)
 A typical configuration file to control the model type, model parameter and experiment environment looks like follow:
 
+{
+    "model": {
+        "architecture": "BertMixModel",
+        "n_classes": 2,
+        "gru_hidden_size": 100,
+        "num_gru_layers": 1,
+        "num_grus": 3,
+        "linear_hidden_size": 100,
+        "dropout": 0.5,
+        "fine_tune_embeddings": true,
+        "sentence_length_cut": 40,
+        "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",
+        "use_regularization": "none",
+        "regularization_lambda": 0
+    },
+    "training": {
+        "start_epoch": 0,
+        "batch_size": 64,
+        "lr": 1e-5,
+        "lr_decay": 0.9,
+        "momentum": 0.9,
+        "workers": 0,
+        "epochs": 30,
+        "grad_clip": "none",
+        "print_freq": 250,
+        "checkpoint": "none",
+        "save_checkpoint_freq_epoch": 1,
+        "save_checkpoint_path": "/cluster/scratch/__USER__/log_dir/mix_bert_bs64",
+        "train_without_val": false,
+        "weight_decay":0.0
+    },
+    "dataset": {
+        "dataset_dir": "../dataset",
+        "rel_train_path": "train_split.csv",
+        "rel_val_path": "val_split.csv",
+        "rel_test_path": "test_cleaned.csv"
+    }
+}
 
 
