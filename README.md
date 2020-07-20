@@ -39,41 +39,45 @@ A typical configuration file to control the model type, model parameter and expe
 ```
 {
     "model": {
-        "architecture": "BertMixModel",
+        "architecture": "BertMixModel",   # other options: BertBaseModel, BertLastFourModel
         "n_classes": 2,
-        "gru_hidden_size": 100,
-        "num_gru_layers": 1,
-        "num_grus": 3,
-        "linear_hidden_size": 100,
-        "dropout": 0.5,
-        "fine_tune_embeddings": true,
-        "sentence_length_cut": 40,
-        "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",
-        "use_regularization": "none",
-        "regularization_lambda": 0
+        "gru_hidden_size": 100,  # the number of hidden units in each GRU used in the model, plz refer to section XX in the paper
+        "num_gru_layers": 1, # the number of layer in each GRU used in the model.
+        "num_grus": 3, # the number of GRUs used to fuse the bert layers
+        "linear_hidden_size": 100, # the number of hidden units for the linear classifier layer 
+        "dropout": 0.5, 
+        "fine_tune_embeddings": true, # to reveal the true power of bert, fine-tune need to be enabled
+        "sentence_length_cut": 40, 
+        "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",  
+        "use_regularization": "none",  # parameters used in the experiment in appendix XX
+        "regularization_lambda": 0 # for appendix XX
     },
     "training": {
-        "start_epoch": 0,
-        "batch_size": 64,
+        "start_epoch": 0,  # the starting epoch, only used for continue training, otw set to 0
+        "batch_size": 64,  
         "lr": 1e-5,
-        "lr_decay": 0.9,
+        "lr_decay": 0.9, # after each iteration, the learning rate will be set to previous learning rate * lr_decay
         "momentum": 0.9,
-        "workers": 0,
+        "workers": 0, 
         "epochs": 30,
         "grad_clip": "none",
         "print_freq": 250,
         "checkpoint": "none",
-        "save_checkpoint_freq_epoch": 1,
-        "save_checkpoint_path": "/cluster/scratch/__USER__/log_dir/mix_bert_bs64",
+        "save_checkpoint_freq_epoch": 1,  
+        "save_checkpoint_path": "/cluster/scratch/__USER__/log_dir/mix_bert_bs64",  # specify the path to save the checkpoint
         "train_without_val": false,
         "weight_decay":0.0
     },
     "dataset": {
-        "dataset_dir": "../dataset",
+        "dataset_dir": "../dataset",  # the dataset folder (which includes train, validation and test files)
         "rel_train_path": "train_split.csv",
         "rel_val_path": "val_split.csv",
         "rel_test_path": "test_cleaned.csv"
     }
 }
+
 ```
+
+
+
 
