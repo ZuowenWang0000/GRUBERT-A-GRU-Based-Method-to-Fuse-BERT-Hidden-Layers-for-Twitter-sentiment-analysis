@@ -12,56 +12,7 @@ import os
 import copy
 import numpy as np
 import pandas as pd
-
-def prepare_embeddings_flair(sentences, embedder, device):
-    embedder.embed(sentences)
-
-    lengths = [len(sentence.tokens) for sentence in sentences]
-    longest_token_sequence_in_batch: int = max(lengths)
-    pre_allocated_zero_tensor = torch.zeros(
-        embedder.embedding_length * longest_token_sequence_in_batch,
-        dtype=torch.float,
-        device=device,
-    )
-
-    all_embs = list()
-    for sentence in sentences:
-        all_embs += [emb for token in sentence for emb in token.get_each_embedding()]
-        nb_padding_tokens = longest_token_sequence_in_batch - len(sentence)
-
-        if nb_padding_tokens > 0:
-            t = pre_allocated_zero_tensor[:embedder.embedding_length * nb_padding_tokens]
-            all_embs.append(t)
-
-    embeddings = torch.cat(all_embs).view([len(sentences), longest_token_sequence_in_batch, embedder.embedding_length])
-
-    return embeddings.to(device)
-
-
-def prepare_embeddings_bert_mix(data, embedder, device):
-    x = data["text"]
-    embeddings = embedder(input_ids=x.to(device))
-
-    h0 = torch.cat(embeddings[2][1:5], 2)
-    h1 = torch.cat(embeddings[2][5:9], 2)
-    h2 = torch.cat(embeddings[2][9:13], 2)
-
-    return [h0, h1, h2]
-
-
-def prepare_embeddings_bert_base(data, embedder, device):
-    x = data["text"]
-    embeddings = embedder(input_ids=x.to(device))
-    # h2 = torch.cat(embeddings[2][12], 2)
-    h2 = embeddings[2][12]
-    return [h2]
-
-
-def prepare_embeddings_bert_last_four(data, embedder, device):
-    x = data["text"]
-    embeddings = embedder(input_ids=x.to(device))
-    h2 = torch.cat(embeddings[2][9:13], 2)
-    return [h2]
+from embeddings import *
 
 
 def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder):
@@ -69,7 +20,7 @@ def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
     results = np.array([])
     # Batches
     for i, data in enumerate(eval_loader):
-        embeddings = prepare_embeddings_fn(data, embedder, device)
+        embeddings = prepare_embeddings_fn(data, embedder, device, config)
 
         # Forward prop.
         output = model(embeddings)
@@ -88,10 +39,10 @@ def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
 
 
 @click.command()
-@click.option('--config', default='configs/pipeline_check_lstm.json', type=str)
-@click.option('--checkpoint', default='./log_dir/')
+@click.option('--config', default='specify_config_using_--config_option', type=str)
+@click.option('--checkpoint', default='specify_checkpoint_using_--checkpoint_option', type=str)
 @click.option('--predict-file', default='./prediction', type=str)
-@click.option('--embedding', default='elmo', type=str)
+@click.option('--embedding', default='specify_embedding_using_--embedding_option', type=str)
 
 
 def main_cli(config, checkpoint, predict_file, embedding):
@@ -101,38 +52,19 @@ def main_cli(config, checkpoint, predict_file, embedding):
 
     batch_size = 8
     dataset_path = config.dataset.dataset_dir
-    train_file_path = config.dataset.rel_train_path
     test_file_path = config.dataset.rel_test_path
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
     workers = config.training.workers  # number of workers for loading data in the DataLoader
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # setup embeddings
     
+    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=fine_tune_embeddings)
     if embedding in ["flair", "bert", "elmo"]:
         import flair
         from flair.datasets import CSVClassificationDataset
-        from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
-        glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
-        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
-        embeddings_list = [glove_embedding, syngcn_embedding]
-
-        if embedding == "flair":
-            print("[flair] initializing Flair embeddings", flush=True)
-            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune), FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune)]
-        elif embedding == "bert":
-            print("[flair] initializing Bert embeddings", flush=True)
-            embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune)]
-        elif embedding == "elmo":
-            print("[flair] initializing ELMo embeddings", flush=True)
-            embeddings_list += [ELMoEmbeddings(model="medium", embedding_mode="top")]
-        else:
-            raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
-
-        embedding = StackedEmbeddings(embeddings=embeddings_list)
         print("[flair] initializing dataset", flush=True)
         eval_dataset = CSVClassificationDataset(os.path.join(dataset_path, test_file_path), {1: "text", 2: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         eval_loader = flair.datasets.DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, num_workers=workers)
-        embedder = embedding.to(device)
         prepare_embeddings_fn = prepare_embeddings_flair
         print("[flair] entering prediction loop", flush=True)
     
@@ -140,7 +72,6 @@ def main_cli(config, checkpoint, predict_file, embedding):
         print(f"[{embedding}] initializing embeddings+dataset", flush=True)
         eval_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, test_file_path))
         eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
-        embedder = None  # Model has built-in embedder
         prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
         print(f"{embedding} entering prediction loop", flush=True)
 

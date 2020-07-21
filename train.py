@@ -19,6 +19,7 @@ from bert_model import BertMixModel, BertBaseModel, BertLastFourModel
 from dataset import BertTwitterDataset
 from utils import *
 from test import *
+from embeddings import *
 
 def main(config, seed=None, embedding="bert-mix"):
     """
@@ -65,35 +66,19 @@ def main(config, seed=None, embedding="bert-mix"):
 
     print("Checkpoints will be saved in: %s" % save_checkpoint_path, flush=True)
 
+    print(f"[{embedding}] initializing embedder", flush=True)
+    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=fine_tune_embeddings)
+
     if embedding in ["flair", "bert", "elmo"]:
         import flair
         from flair.datasets import CSVClassificationDataset
-        from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
-        glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
-        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
-        embeddings_list = [glove_embedding, syngcn_embedding]
-
-        if embedding == "flair":
-            print("[flair] initializing Flair embeddings", flush=True)
-            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune_embeddings)]
-        elif embedding == "bert":
-            print("[flair] initializing Bert embeddings", flush=True)
-            embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune_embeddings)]
-        elif embedding == "elmo":
-            print("[flair] initializing ELMo embeddings", flush=True)
-            embeddings_list += [ELMoEmbeddings(model="medium", embedding_mode="top")]
-        else:
-            raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
-
-        embedding = StackedEmbeddings(embeddings=embeddings_list)
-        print("[flair] initializing dataset", flush=True)
+        print(f"[{embedding}] initializing dataset", flush=True)
         train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
-        embedder = embedding.to(device)
         prepare_embeddings_fn = prepare_embeddings_flair
-        print("[flair] entering training loop", flush=True)
+        print(f"[{embedding}] entering training loop", flush=True)
     
     elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
         print("[" + embedding + "]" + " initializing embeddings+dataset", flush=True)
@@ -101,7 +86,6 @@ def main(config, seed=None, embedding="bert-mix"):
         val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path), sentence_length_cut=sentence_length_cut)
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
-        embedder = None  # embedder in model
         prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
         print("[" + embedding + "]" + " entering training loop", flush=True)
 
@@ -119,7 +103,7 @@ def main(config, seed=None, embedding="bert-mix"):
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1), flush=True)
     else:
-        emb_sizes_list = [e.embedding_length for e in embedding.embeddings] if embedding not in ["bert-base", "bert-mix","bert-last-four"] else []
+        emb_sizes_list = [e.embedding_length for e in embedder.embeddings] if embedding not in ["bert-base", "bert-mix","bert-last-four"] else []
         model = model_type(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
         if hasattr(model, "embedder"):
             print("Model has built-in embedder, using it", flush=True)
@@ -178,60 +162,6 @@ def main(config, seed=None, embedding="bert-mix"):
     test(val_loader, model, criterion, optimizer, epoch, device, config, writer, prepare_embeddings_fn, embedder)
     # test(val_loader, model, criterion, device, config, writer, epoch, embedder)
     writer.close()
-
-
-def prepare_embeddings_flair(sentences, embedder, device, params):
-    embedder.embed(sentences)
-
-    lengths = [len(sentence.tokens) for sentence in sentences]
-    longest_token_sequence_in_batch: int = max(lengths)
-    pre_allocated_zero_tensor = torch.zeros(
-        embedder.embedding_length * longest_token_sequence_in_batch,
-        dtype=torch.float,
-        device=device,
-    )
-    all_embs = list()
-    for sentence in sentences:
-        all_embs += [emb for token in sentence for emb in token.get_each_embedding()]
-        nb_padding_tokens = longest_token_sequence_in_batch - len(sentence)
-        if nb_padding_tokens > 0:
-            t = pre_allocated_zero_tensor[:embedder.embedding_length * nb_padding_tokens]
-            all_embs.append(t)
-    embeddings = torch.cat(all_embs).view([len(sentences), longest_token_sequence_in_batch, embedder.embedding_length])
-    labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
-    return embeddings.to(device), labels.to(device)
-
-def prepare_embeddings_bert_mix(data, embedder, device, params):
-    x = data["text"]
-    labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
-    labels = labels.to(device)
-
-    num_combined_per_gru = int(12 / params.model.num_grus)
-
-    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
-    return h, labels
-    # h0 = torch.cat(embeddings[2][1:5], 2)
-    # h1 = torch.cat(embeddings[2][5:9], 2)
-    # h2 = torch.cat(embeddings[2][9:13], 2)
-    # return [h0, h1, h2], labels
-
-def prepare_embeddings_bert_base(data, embedder, device, params):
-    x = data["text"]
-    labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
-    labels = labels.to(device)
-    # h2 = torch.cat(embeddings[2][12], 2)
-    h2 = embeddings[2][12]
-    return [h2], labels
-
-def prepare_embeddings_bert_last_four(data, embedder, device, params):
-    x = data["text"]
-    labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
-    labels = labels.to(device)
-    h2 = torch.cat(embeddings[2][9:13], 2)
-    return [h2], labels
 
 
 def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
