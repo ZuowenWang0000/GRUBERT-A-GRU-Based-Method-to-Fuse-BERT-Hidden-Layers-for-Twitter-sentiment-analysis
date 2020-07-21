@@ -82,11 +82,20 @@ def get_config(config_path):
     return config
 
 
+class AttrDict(dict):
+    def __getattr__(self, name):
+        return self[name]
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+
 def config_to_namedtuple(obj):
     if isinstance(obj, dict):
         for key, value in obj.items():
             obj[key] = config_to_namedtuple(value)
-        return namedtuple('GenericDict', obj.keys())(**obj)
+        # return namedtuple('GenericDict', obj.keys())(**obj)
+        return AttrDict(obj)
     elif isinstance(obj, list):
         return [config_to_namedtuple(item) for item in obj]
     else:

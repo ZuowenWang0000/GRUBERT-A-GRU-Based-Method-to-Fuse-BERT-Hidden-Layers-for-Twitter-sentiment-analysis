@@ -2,17 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertModel
+from embeddings import initialize_embeddings
 
 
 class GSFlairMixModel(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, model_config):
+    def __init__(self, n_classes, model_config):
         super().__init__()
-        self.device = eval(model_config.device)
+        self.device = model_config.device
 
-        # self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-        # self.embedder = self.embedder.to(self.device)
+        self.embedder = initialize_embeddings(model_config.embedding_type, self.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
 
-        emb_sum_sizes = sum(emb_sizes_list)
+        emb_sum_sizes = sum([e.embedding_length for e in self.embedder.embeddings])
         self.gru1 = nn.GRU(emb_sum_sizes, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
                            bidirectional=True)
         # self.gru2 = nn.GRU(4 * 768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,

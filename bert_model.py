@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from transformers import BertModel
 
 class BertMixModel(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, model_config):
+    def __init__(self, n_classes, model_config):
         super().__init__()
-        self.device = eval(model_config.device)
+        self.device = model_config.device
 
         self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         self.embedder = self.embedder.to(self.device)
@@ -48,7 +48,7 @@ class BertMixModel(nn.Module):
 class BertBaseModel(nn.Module):
     def __init__(self, n_classes, emb_sizes_list, model_config):
         super().__init__()
-        self.device = eval(model_config.device)
+        self.device = model_config.device
 
         self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         self.embedder = self.embedder.to(self.device)
@@ -87,7 +87,7 @@ class BertBaseModel(nn.Module):
 class BertLastFourModel(nn.Module):
     def __init__(self, n_classes, emb_sizes_list, model_config):
         super().__init__()
-        self.device = eval(model_config.device)
+        self.device = model_config.device
 
         self.embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
         self.embedder = self.embedder.to(self.device)

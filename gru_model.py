@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class GruModel(nn.Module):
-    def __init__(self, n_classes, emb_sizes_list, model_config):
+    def __init__(self, n_classes, model_config):
         super().__init__()
-        emb_sum_sizes = sum(emb_sizes_list)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
+        emb_sum_sizes = sum([e.embedding_length for e in self.embedder.embeddings])
         self.emb_weights = torch.nn.Parameter(torch.ones([emb_sum_sizes], requires_grad=True))
         self.gru = nn.GRU(emb_sum_sizes, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers, bidirectional=True, batch_first=True)
         self.lin = nn.Linear(2*model_config.gru_hidden_size, n_classes)

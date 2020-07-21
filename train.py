@@ -73,14 +73,16 @@ def main(config, seed=None, embedding="bert-mix"):
     val_file_path = config.dataset.rel_val_path
     test_file_path = config.dataset.rel_test_path
 
+    setattr(config.model, "embedding_type", embedding)
+
     cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    setattr(config.model, "device", device)
 
     print("Checkpoints will be saved in: %s" % save_checkpoint_path, flush=True)
 
     print(f"[{embedding}] initializing embedder", flush=True)
-    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=fine_tune_embeddings)
 
     if embedding in ["flair", "bert", "elmo"]:
         import flair
@@ -116,8 +118,7 @@ def main(config, seed=None, embedding="bert-mix"):
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1), flush=True)
     else:
-        emb_sizes_list = [e.embedding_length for e in embedder.embeddings] if embedding not in ["bert-base", "bert-mix","bert-last-four"] else []
-        model = model_type(n_classes=n_classes, emb_sizes_list=emb_sizes_list, model_config=config.model)
+        model = model_type(n_classes=n_classes, model_config=config.model)
         if hasattr(model, "embedder"):
             print("Model has built-in embedder, using it", flush=True)
             embedder = model.embedder
