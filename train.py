@@ -209,7 +209,7 @@ def prepare_embeddings_bert_mix(data, embedder, device, params):
 
     num_combined_per_gru = int(12 / params.model.num_grus)
 
-    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(num_grus)]
+    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
     return h, labels
     # h0 = torch.cat(embeddings[2][1:5], 2)
     # h1 = torch.cat(embeddings[2][5:9], 2)
