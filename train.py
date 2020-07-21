@@ -31,6 +31,7 @@ from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
 from bert_model import BertMixModel, BertBaseModel, BertLastFourModel
+from flair_model import GSFlairMixModel
 from dataset import BertTwitterDataset
 from utils import *
 from test import *
