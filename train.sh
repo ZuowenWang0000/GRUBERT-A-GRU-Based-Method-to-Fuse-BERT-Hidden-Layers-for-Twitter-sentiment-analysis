@@ -8,8 +8,8 @@ export num_gpu_per_job=1
 # memory per job
 export mem_per_gpu=22000
 # type of GPU
-export gpu_type=TeslaV100_SXM2_32GB
-#export gpu_type=GeForceGTX1080Ti
+#export gpu_type=TeslaV100_SXM2_32GB
+export gpu_type=GeForceGTX1080Ti
 
 export JOB_NAME='cil'
 
