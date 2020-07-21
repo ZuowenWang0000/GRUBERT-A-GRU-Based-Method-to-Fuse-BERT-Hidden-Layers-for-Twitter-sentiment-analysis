@@ -4,6 +4,7 @@ import sys
 import copy
 import json
 import click
+import random
 import numpy as np
 
 import torch
@@ -30,6 +31,8 @@ def main(config, seed=None, embedding="bert-mix"):
     config = config_to_namedtuple(config_dict)
 
     # ensure reproducibility
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True
