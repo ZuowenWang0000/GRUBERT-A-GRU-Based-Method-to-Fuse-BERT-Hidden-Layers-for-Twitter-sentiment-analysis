@@ -18,7 +18,7 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
             embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune_embeddings)]
         elif embedding == "elmo":
             print("[flair] initializing ELMo embeddings", flush=True)
-            embeddings_list += [ELMoEmbeddings(model="medium", embedding_mode="top")]
+            embeddings_list += [ELMoEmbeddings(model="original", embedding_mode="top")]
         else:
             raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
 
