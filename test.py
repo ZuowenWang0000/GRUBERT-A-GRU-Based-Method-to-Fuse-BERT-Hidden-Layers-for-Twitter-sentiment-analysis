@@ -26,7 +26,7 @@ def test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_wri
     for _, data in enumerate(eval_loader):
 
         # Perform embedding + padding
-        embeddings, labels = prepare_embeddings_fn(data, embedder, device)
+        embeddings, labels = prepare_embeddings_fn(data, embedder, device, config)
 
         # Forward prop.
         output = model(embeddings)

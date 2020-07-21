@@ -38,8 +38,6 @@ def main(config, seed=None, embedding="bert-mix"):
     n_classes = config.model.n_classes
     fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
-    global num_grus
-    num_grus = config.model.num_grus
 
     # Training parameters
     start_epoch = config.training.start_epoch  # start at this epoch
@@ -182,7 +180,7 @@ def main(config, seed=None, embedding="bert-mix"):
     writer.close()
 
 
-def prepare_embeddings_flair(sentences, embedder, device):
+def prepare_embeddings_flair(sentences, embedder, device, params):
     embedder.embed(sentences)
 
     lengths = [len(sentence.tokens) for sentence in sentences]
@@ -203,23 +201,22 @@ def prepare_embeddings_flair(sentences, embedder, device):
     labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
     return embeddings.to(device), labels.to(device)
 
-def prepare_embeddings_bert_mix(data, embedder, device):
+def prepare_embeddings_bert_mix(data, embedder, device, params):
     x = data["text"]
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
     labels = labels.to(device)
 
-    assert 12 % num_grus == 0
-    num_combined_per_gru = int(12 / num_grus)
+    num_combined_per_gru = int(12 / params.model.num_grus)
 
-    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1, (i+1)*num_combined_per_gru+1], 2)   for i in range(num_grus)]
+    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(num_grus)]
     return h, labels
     # h0 = torch.cat(embeddings[2][1:5], 2)
     # h1 = torch.cat(embeddings[2][5:9], 2)
     # h2 = torch.cat(embeddings[2][9:13], 2)
     # return [h0, h1, h2], labels
 
-def prepare_embeddings_bert_base(data, embedder, device):
+def prepare_embeddings_bert_base(data, embedder, device, params):
     x = data["text"]
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
@@ -228,7 +225,7 @@ def prepare_embeddings_bert_base(data, embedder, device):
     h2 = embeddings[2][12]
     return [h2], labels
 
-def prepare_embeddings_bert_last_four(data, embedder, device):
+def prepare_embeddings_bert_last_four(data, embedder, device, params):
     x = data["text"]
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
@@ -259,7 +256,7 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     for i, data in enumerate(train_loader):
 
         # Perform embedding + padding
-        embeddings, labels = prepare_embeddings_fn(data, embedder, device)
+        embeddings, labels = prepare_embeddings_fn(data, embedder, device, config)
         data_time.update(time.time() - start)
 
         # Forward prop.
