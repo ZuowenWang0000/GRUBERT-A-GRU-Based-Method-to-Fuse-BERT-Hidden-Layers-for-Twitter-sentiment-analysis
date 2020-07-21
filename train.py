@@ -38,7 +38,8 @@ def main(config, seed=None, embedding="bert-mix"):
     n_classes = config.model.n_classes
     fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
-    global num_grus = config.model.num_grus
+    global num_grus
+    num_grus = config.model.num_grus
 
     # Training parameters
     start_epoch = config.training.start_epoch  # start at this epoch
