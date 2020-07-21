@@ -29,8 +29,11 @@ def main(config, seed=None, embedding="bert-mix"):
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
 
+    # ensure reproducibility
     torch.manual_seed(seed)
     np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     print(config)
     model_type = eval(config.model.architecture)
