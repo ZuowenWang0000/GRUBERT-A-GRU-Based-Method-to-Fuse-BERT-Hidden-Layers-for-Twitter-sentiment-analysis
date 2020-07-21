@@ -38,6 +38,7 @@ def main(config, seed=None, embedding="bert-mix"):
     n_classes = config.model.n_classes
     fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
+    global num_grus = config.model.num_grus
 
     # Training parameters
     start_epoch = config.training.start_epoch  # start at this epoch
@@ -206,10 +207,16 @@ def prepare_embeddings_bert_mix(data, embedder, device):
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
     labels = labels.to(device)
-    h0 = torch.cat(embeddings[2][1:5], 2)
-    h1 = torch.cat(embeddings[2][5:9], 2)
-    h2 = torch.cat(embeddings[2][9:13], 2)
-    return [h0, h1, h2], labels
+
+    assert 12 % num_grus == 0
+    num_combined_per_gru = int(12 / num_grus)
+
+    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1, (i+1)*num_combined_per_gru+1], 2)   for i in range(num_grus)]
+    return h, labels
+    # h0 = torch.cat(embeddings[2][1:5], 2)
+    # h1 = torch.cat(embeddings[2][5:9], 2)
+    # h2 = torch.cat(embeddings[2][9:13], 2)
+    # return [h0, h1, h2], labels
 
 def prepare_embeddings_bert_base(data, embedder, device):
     x = data["text"]
