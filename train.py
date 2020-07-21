@@ -1,13 +1,27 @@
-import time
+import sys
 import os
+import random
+import torch
+import numpy as np
+if __name__ == "__main__":
+    try:
+        seed = int(sys.argv[sys.argv.index("--seed") + 1])
+        print("Using seed: %d" % seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        random.seed(seed)
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    except:
+        print("WARNING: Seed not set")
+
+import time
 import sys
 import copy
 import json
 import click
-import random
-import numpy as np
 
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
@@ -30,14 +44,6 @@ def main(config, seed=None, embedding="bert-mix"):
     # get configs
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
-
-    # ensure reproducibility
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
     print(config)
     model_type = eval(config.model.architecture)
