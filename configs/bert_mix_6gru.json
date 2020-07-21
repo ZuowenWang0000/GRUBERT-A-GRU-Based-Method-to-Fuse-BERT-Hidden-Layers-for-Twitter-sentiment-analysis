@@ -4,7 +4,7 @@
         "n_classes": 2,
         "gru_hidden_size": 100,
         "num_gru_layers": 1,
-        "num_grus": 4,
+        "num_grus": 6,
         "linear_hidden_size": 100,
         "dropout": 0.5,
         "fine_tune_embeddings": true,
