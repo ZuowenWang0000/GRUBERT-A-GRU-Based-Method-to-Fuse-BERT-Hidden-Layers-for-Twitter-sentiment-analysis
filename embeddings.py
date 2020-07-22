@@ -9,10 +9,11 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
         embeddings_list = [glove_embedding, syngcn_embedding]
+        # embedding_list = []
 
         if embedding == "flair":
             print("[flair] initializing Flair embeddings", flush=True)
-            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=64, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=64, fine_tune=fine_tune_embeddings)]
+            embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=128, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=128, fine_tune=fine_tune_embeddings)]
         elif embedding == "bert":
             print("[flair] initializing Bert embeddings", flush=True)
             embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune_embeddings)]
