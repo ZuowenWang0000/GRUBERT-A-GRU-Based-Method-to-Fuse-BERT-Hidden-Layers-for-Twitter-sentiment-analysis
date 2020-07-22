@@ -30,9 +30,9 @@ import torch.backends.cudnn as cudnn
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from bert_model import BertMixModel, BertBaseModel, BertLastFourModel, BertMixLinearModel, BertMixLSTMModel
+from bert_model import BertMixModel, BertBaseModel, BertLastFourModel, BertMixLinearModel, BertMixLSTMModel, RobertaSentimentModel
 from flair_model import GSFlairMixModel
-from dataset import BertTwitterDataset
+from dataset import BertTwitterDataset, RobertaTwitterDataset
 from utils import *
 from test import *
 from embeddings import *
@@ -50,7 +50,7 @@ def main(config, seed=None, embedding="bert-mix"):
     model_type = eval(config.model.architecture)
 
     n_classes = config.model.n_classes
-    fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
+    # fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
     sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
 
     # Training parameters
@@ -95,10 +95,17 @@ def main(config, seed=None, embedding="bert-mix"):
         prepare_embeddings_fn = prepare_embeddings_flair
         print(f"[{embedding}] entering training loop", flush=True)
     
-    elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
+    elif embedding in ["bert-base", "bert-mix", "bert-last-four", "roberta-mix"]:
         print("[" + embedding + "]" + " initializing embeddings+dataset", flush=True)
-        train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path), sentence_length_cut=sentence_length_cut)
-        val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path), sentence_length_cut=sentence_length_cut)
+        if embedding == "roberta-mix":
+            train_dataset = RobertaTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path),
+                                               sentence_length_cut=sentence_length_cut)
+            val_dataset = RobertaTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path),
+                                             sentence_length_cut=sentence_length_cut)
+        else:  # using bert class embedding
+            train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path), sentence_length_cut=sentence_length_cut)
+            val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path), sentence_length_cut=sentence_length_cut)
+
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
         prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))

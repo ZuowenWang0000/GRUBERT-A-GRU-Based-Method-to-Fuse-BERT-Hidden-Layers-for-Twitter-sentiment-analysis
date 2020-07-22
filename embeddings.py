@@ -59,15 +59,21 @@ def prepare_embeddings_bert_mix(data, embedder, device, params):
     labels = data["label"]
     embeddings = embedder(input_ids=x.to(device))
     labels = labels.to(device)
-
     num_combined_per_gru = int(12 / params.model.num_grus)
-
     h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
     return h, labels
-    # h0 = torch.cat(embeddings[2][1:5], 2)
-    # h1 = torch.cat(embeddings[2][5:9], 2)
-    # h2 = torch.cat(embeddings[2][9:13], 2)
-    # return [h0, h1, h2], labels
+
+def prepare_embeddings_roberta_mix(data, embedder, device, params):
+    x = data["text"]
+    labels = data["label"]
+    embeddings = embedder(input_ids=x.to(device))
+    labels = labels.to(device)
+    num_combined_per_gru = int(12 / params.model.num_grus)
+    # print("prepare roberta len :{}".format(len(embeddings[2])))
+    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
+
+    return h, labels
+
 
 
 def prepare_embeddings_bert_base(data, embedder, device, params):
