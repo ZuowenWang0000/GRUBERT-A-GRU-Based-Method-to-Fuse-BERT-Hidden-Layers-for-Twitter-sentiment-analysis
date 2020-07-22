@@ -20,7 +20,7 @@ def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
     results = np.array([])
     # Batches
     for i, data in enumerate(eval_loader):
-        embeddings = prepare_embeddings_fn(data, embedder, device, config)
+        embeddings, _ = prepare_embeddings_fn(data, embedder, device, config)
 
         # Forward prop.
         output = model(embeddings)
@@ -58,7 +58,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # setup embeddings
     
-    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=fine_tune_embeddings)
+    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=False)
     if embedding in ["flair", "bert", "elmo"]:
         import flair
         from flair.datasets import CSVClassificationDataset
