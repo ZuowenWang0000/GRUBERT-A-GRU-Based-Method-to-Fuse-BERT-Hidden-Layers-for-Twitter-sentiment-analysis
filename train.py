@@ -84,7 +84,7 @@ def main(config, seed=None, embedding="bert-mix"):
 
     print(f"[{embedding}] initializing embedder", flush=True)
 
-    if embedding in ["flair", "bert", "elmo"]:
+    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         print(f"[{embedding}] initializing dataset", flush=True)

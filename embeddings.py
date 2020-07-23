@@ -20,6 +20,15 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
         elif embedding == "elmo":
             print("[flair] initializing ELMo embeddings", flush=True)
             embeddings_list += [ELMoEmbeddings(model="original", embedding_mode="top")]
+        elif embedding == "glove-only":
+            print("[flair] initializing Glove only embedding", flush=True)
+            embeddings_list = [glove_embedding]
+        elif embedding == "syngcn-only":
+            print("[flair] initializing synGCN only embedding", flush=True)
+            embeddings_list = [syngcn_embedding]
+        elif embedding == "glove-syngcn":
+            print("[flair] initializing synGCN only embedding", flush=True)
+            embeddings_list = [glove_embedding, syngcn_embedding]
         else:
             raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
 
