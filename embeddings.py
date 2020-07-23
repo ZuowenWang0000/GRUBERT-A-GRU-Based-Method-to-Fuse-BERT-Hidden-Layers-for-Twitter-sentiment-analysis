@@ -2,12 +2,13 @@ import torch
 import numpy as np
 
 def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
-    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn"]:
+    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
+        twitter_word_embedding = WordEmbeddings("en-twitter")
         embeddings_list = [glove_embedding, syngcn_embedding]
         # embedding_list = []
 
@@ -26,6 +27,9 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
         elif embedding == "syngcn-only":
             print("[flair] initializing synGCN only embedding", flush=True)
             embeddings_list = [syngcn_embedding]
+        elif embedding == "twitter-only":
+            print("[flair] initializing twitter only embedding", flush=True)
+            embeddings_list = [twitter_word_embedding]
         elif embedding == "glove-syngcn":
             print("[flair] initializing synGCN only embedding", flush=True)
             embeddings_list = [glove_embedding, syngcn_embedding]
