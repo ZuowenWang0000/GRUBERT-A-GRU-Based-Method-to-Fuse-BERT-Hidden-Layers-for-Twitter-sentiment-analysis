@@ -38,7 +38,7 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
 
         return StackedEmbeddings(embeddings=embeddings_list).to(device)
     
-    elif embedding in ["bert-base", "bert-mix", "bert-last-four"]:
+    elif embedding in ["bert-mix", "bert-base", "bert-last-four", "roberta-mix"]:
         return None
 
     else:
