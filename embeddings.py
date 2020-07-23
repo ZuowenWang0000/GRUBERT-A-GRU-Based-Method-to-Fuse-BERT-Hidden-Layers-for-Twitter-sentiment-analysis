@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
-    if embedding in ["flair", "bert", "elmo"]:
+    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
