@@ -131,7 +131,11 @@ def main(config, seed=None, embedding="bert-mix"):
             print("Using user-defined embedder", flush=True)
     else:
         model = model_type(n_classes=n_classes, model_config=config.model)
-        if hasattr(model, "embedder"):
+        if embedding == "elmo":  # can't save elmo embedder somehow, so have to use it outside the model
+            print("Using elmo, overriding model embedder", flush=True)
+            model.embedder = None
+            embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
+        elif hasattr(model, "embedder"):
             print("Model has built-in embedder, using it", flush=True)
             embedder = model.embedder
         else:
