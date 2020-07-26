@@ -30,7 +30,8 @@ import torch.backends.cudnn as cudnn
 from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
-from bert_model import BertMixModel, BertBaseModel, BertSentimentModel, BertLastFourModel, BertMixLinearModel, BertMixLSTMModel, RobertaSentimentModel
+from bert_model import BertMixModel, BertBaseModel, BertWSModel, BertSentimentModel, BertLastFourModel, BertMixLinearModel, \
+    BertMixLSTMModel, RobertaSentimentModel, RobertaWSModel
 from flair_model import GSFlairMixModel
 from dataset import BertTwitterDataset, RobertaTwitterDataset
 from utils import *
