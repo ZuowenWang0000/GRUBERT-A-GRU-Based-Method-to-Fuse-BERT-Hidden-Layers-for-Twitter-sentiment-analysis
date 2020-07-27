@@ -27,7 +27,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import torch.backends.cudnn as cudnn
 
-from attention_network import AttentionNetwork
+# from attention_network import AttentionNetwork
 from lstm_model import LstmModel
 from gru_model import GruModel
 from bert_model import BertMixModel, BertBaseModel, BertWSModel, BertSentimentModel, BertLastFourModel, BertMixLinearModel, \

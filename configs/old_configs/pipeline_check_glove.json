@@ -1,0 +1,38 @@
+{
+    "embeddings": {
+        "emb_sizes_list": [300],
+        "use_regularization": "none",
+        "l1_lambda": 0.0001
+    },
+    "model": {
+        "architecture": "attention",
+        "n_classes": 2,
+        "word_rnn_size": 50,
+        "word_rnn_layers": 1,
+        "word_att_size": 100,
+        "dropout": 0.3,
+        "fine_tune_embeddings": false,
+        "sentence_length_cut": 40
+    },
+    "training": {
+        "start_epoch": 0,
+        "batch_size": 64,
+        "lr": 1e-3,
+        "momentum": 0.9,
+        "workers": 4,
+        "epochs": 20,
+        "grad_clip": "none",
+        "print_freq": 2000,
+        "checkpoint": "none",
+        "save_checkpoint_freq_epoch": 5,
+        "train_without_val": false
+    },
+    "dataset": {
+        "dataset_dir": "../dataset",
+        "rel_train_path": "train_small_split.csv",
+        "rel_val_path": "val_small_split.csv",
+        "rel_test_path": "test_small_split.csv"
+    }
+}
+
+
