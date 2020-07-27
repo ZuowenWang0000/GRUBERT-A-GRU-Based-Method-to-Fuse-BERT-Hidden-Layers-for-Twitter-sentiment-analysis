@@ -1,0 +1,39 @@
+{
+    "model": {
+        "architecture": "GSFlairMixModel",
+        "n_classes": 2,
+        "gru_hidden_size": 100,
+        "num_gru_layers": 1,
+        "num_grus": 3,
+        "linear_hidden_size": 100,
+        "dropout": 0.5,
+        "fine_tune_embeddings": true,
+        "sentence_length_cut": 40,
+        "use_regularization": "none",
+        "regularization_lambda": 0
+    },
+    "training": {
+        "start_epoch": 0,
+        "batch_size": 64,
+        "lr": 1e-5,
+        "lr_decay": 0.9,
+        "momentum": 0.9,
+        "workers": 8,
+        "epochs": 50,
+        "grad_clip": "none",
+        "print_freq": 1000,
+        "checkpoint": "none",
+        "save_checkpoint_freq_epoch": 1,
+        "save_checkpoint_path": "/cluster/scratch/__USER__/log_dir/flair_mix_bs64_ft_para",
+        "train_without_val": false,
+        "weight_decay":0.0
+    },
+    "dataset": {
+        "dataset_dir": "../dataset",
+        "rel_train_path": "train_split.csv",
+        "rel_val_path": "val_split.csv",
+        "rel_test_path": "test_cleaned.csv"
+    }
+}
+
+
