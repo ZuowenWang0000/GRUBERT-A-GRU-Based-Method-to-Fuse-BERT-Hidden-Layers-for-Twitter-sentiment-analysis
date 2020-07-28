@@ -14,6 +14,7 @@ if __name__ == "__main__":
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
     except:
+        seed = None
         print("WARNING: Seed not set")
 
 import time
@@ -279,9 +280,9 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
 
 
 @click.command()
-@click.option('--config', default='specify_config_using_--config_option', type=str)
-@click.option('--seed', default=0, type=int)
-@click.option('--embedding', default='specify_embedding_using_--embedding_option', type=str)
+@click.option('-c', '--config', required=True, type=str, help="JSON file specifying model and training parameters")
+@click.option('-s', '--seed', default=0, type=int, help="Random seed to use for producing reproducible results")
+@click.option('-e', '--embedding', required=True, type=str, help="Embedding to use for training")
 
 def main_cli(config, seed, embedding):
     main(config, seed, embedding)

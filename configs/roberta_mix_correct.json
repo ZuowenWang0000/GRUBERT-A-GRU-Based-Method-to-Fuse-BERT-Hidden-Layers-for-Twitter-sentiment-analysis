@@ -1,6 +1,6 @@
 {
     "model": {
-        "architecture": "RobertaSentimentModel",
+        "architecture": "BertWSModel",
         "n_classes": 2,
         "gru_hidden_size": 100,
         "num_gru_layers": 1,
@@ -9,7 +9,6 @@
         "fine_tune_word_embeddings": true,
         "num_grus": 3,
         "sentence_length_cut": 40,
-        "device": "torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")",
         "use_regularization": "none",
         "regularization_lambda": 0
     },
