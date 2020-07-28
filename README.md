@@ -20,7 +20,7 @@ module load gcc/6.3.0 python_gpu/3.7.4 hdf5
 ```
 Then one can use pip to install
 ```
-pip3 install --user requirements.txt
+pip3 install --user -r requirements.txt
 ```
 to install the dependencies needed. Virtual environment is recommended.
 
