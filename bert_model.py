@@ -162,7 +162,7 @@ class BertWSModel(nn.Module):
                 torch.nn.init.xavier_normal_(layer.weight)
 
         for param in self.embedder.parameters():
-            param.requires_grad = True  # todo: replace this by fine_tune？ ZUOWEN
+            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         temp = [embeddings[i].to(self.device).permute(1, 0, 2) for i in range(self.num_grus)]
@@ -201,7 +201,7 @@ class BertMixLinearModel(nn.Module):
                 torch.nn.init.xavier_normal_(layer.weight)
 
         for param in self.embedder.parameters():
-            param.requires_grad = True  # todo: replace this by fine_tune？ ZUOWEN
+            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer14, layer58, layer912]
@@ -248,7 +248,7 @@ class BertMixLSTMModel(nn.Module):
                 torch.nn.init.xavier_normal_(layer.weight)
 
         for param in self.embedder.parameters():
-            param.requires_grad = True  # todo: replace this by fine_tune？ ZUOWEN
+            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer14, layer58, layer912]
