@@ -8,7 +8,6 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
         glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
         syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
-        twitter_word_embedding = WordEmbeddings("en-twitter")
         embeddings_list = [glove_embedding, syngcn_embedding]
         # embedding_list = []
 
@@ -29,12 +28,10 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
             embeddings_list = [syngcn_embedding]
         elif embedding == "twitter-only":
             print("[flair] initializing twitter only embedding", flush=True)
-            embeddings_list = [twitter_word_embedding]
+            embeddings_list = [WordEmbeddings("en-twitter")]
         elif embedding == "glove-syngcn":
             print("[flair] initializing synGCN only embedding", flush=True)
             embeddings_list = [glove_embedding, syngcn_embedding]
-        else:
-            raise NotImplementedError("Embeddings must be in ['flair', 'bert', 'elmo']")
 
         return StackedEmbeddings(embeddings=embeddings_list).to(device)
     
@@ -76,17 +73,9 @@ def prepare_embeddings_bert_mix(data, embedder, device, params):
     h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
     return h, labels
 
+
 def prepare_embeddings_roberta_mix(data, embedder, device, params):
-    x = data["text"]
-    labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
-    labels = labels.to(device)
-    num_combined_per_gru = int(12 / params.model.num_grus)
-    # print("prepare roberta len :{}".format(len(embeddings[2])))
-    h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
-
-    return h, labels
-
+    return prepare_embeddings_bert_mix(data, embedder, device, params)
 
 
 def prepare_embeddings_bert_base(data, embedder, device, params):
