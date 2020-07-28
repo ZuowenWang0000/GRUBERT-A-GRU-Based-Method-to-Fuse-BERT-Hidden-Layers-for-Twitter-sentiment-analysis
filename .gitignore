@@ -1,5 +1,9 @@
-twitter-datasets/vocab.pkl
-twitter-datasets/vocab.txt
-twitter-datasets/vocab_cut.txt
-twitter-datasets/*.txt
-twitter-datasets/*.pkl
+# IntelliJ
+.idea/
+
+#vscode
+.vscode/
+
+.vector_cache/
+
+*.DS_Store
