@@ -129,18 +129,17 @@ def main(config, seed=None, embedding="bert-mix"):
     else:
         model = model_type(n_classes=n_classes, model_config=config.model)
         print("Instantiated new model", flush=True)
-
-        if embedding == "elmo":  # can't save elmo embedder somehow, so have to use it outside the model
-            print("Using elmo, overriding model embedder", flush=True)
-            model.embedder = None
-            embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
-        elif hasattr(model, "embedder"):
-            print("Model has built-in embedder, using it", flush=True)
-            embedder = model.embedder
-        else:
-            print("Using user-defined embedder", flush=True)
-
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
+    
+    if embedding == "elmo":  # can't save elmo embedder somehow, so have to use it outside the model
+        print("Using elmo, overriding model embedder", flush=True)
+        model.embedder = None
+        embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
+    elif hasattr(model, "embedder"):
+        print("Model has built-in embedder, using it", flush=True)
+        embedder = model.embedder
+    else:
+        print("Using user-defined embedder", flush=True)
 
     # Loss functions
     criterion = nn.CrossEntropyLoss()
