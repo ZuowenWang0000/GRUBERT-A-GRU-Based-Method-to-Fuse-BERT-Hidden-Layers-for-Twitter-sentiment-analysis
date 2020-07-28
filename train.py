@@ -126,13 +126,10 @@ def main(config, seed=None, embedding="bert-mix"):
         optimizer = checkpoint['optimizer']
         start_epoch = checkpoint['epoch'] + 1
         print('\nLoaded checkpoint from epoch %d.\n' % (start_epoch - 1), flush=True)
-        if hasattr(model, "embedder"):
-            print("Model has built-in embedder, using it", flush=True)
-            embedder = model.embedder
-        else:
-            print("Using user-defined embedder", flush=True)
     else:
         model = model_type(n_classes=n_classes, model_config=config.model)
+        print("Instantiated new model", flush=True)
+
         if embedding == "elmo":  # can't save elmo embedder somehow, so have to use it outside the model
             print("Using elmo, overriding model embedder", flush=True)
             model.embedder = None
