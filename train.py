@@ -5,6 +5,7 @@ import torch
 import numpy as np
 if __name__ == "__main__":
     try:
+        # Try to set the random seed, have to do this here instead of in main()
         seed = int(sys.argv[sys.argv.index("--seed") + 1])
         print("Using seed: %d" % seed)
         os.environ['PYTHONHASHSEED'] = str(seed)
@@ -28,9 +29,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import torch.backends.cudnn as cudnn
 
-# from attention_network import AttentionNetwork
 from lstm_model import LstmModel
-# from gru_model import GruModel
 from bert_model import BertMixModel, BertBaseModel, BertWSModel, BertSentimentModel, BertLastFourModel, BertMixLinearModel, \
     BertMixLSTMModel, RobertaSentimentModel, RobertaWSModel
 from flair_model import GSFlairMixModel
@@ -43,13 +42,12 @@ def main(config, seed=None, embedding="bert-mix"):
     """
     Training and validation.
     """
-    global checkpoint, start_epoch
-    # get configs
+    # Get config
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
 
     print(config)
-    model_type = eval(config.model.architecture)
+    model_type = eval(config.model.architecture)  # Find out which type of model to instantiate
 
     n_classes = config.model.n_classes
     # fine_tune_embeddings = config.model.fine_tune_embeddings  # fine-tune word embeddings?
@@ -65,9 +63,10 @@ def main(config, seed=None, embedding="bert-mix"):
     checkpoint = config.training.checkpoint  # path to saved model checkpoint, None if none
     save_checkpoint_freq_epoch = config.training.save_checkpoint_freq_epoch
     train_without_val = config.training.train_without_val
+    # Replace __USER__ with actual username, append seed for uniqueness
     save_checkpoint_path = config.training.save_checkpoint_path.replace("__USER__", os.popen("whoami").read().strip()) + f"_seed{seed}"
-    weight_decay = config.training.weight_decay
-    lr_decay = config.training.lr_decay  # 0.9 originally
+    weight_decay = config.training.weight_decay  # weight decay
+    lr_decay = config.training.lr_decay  # learning rate decay
 
     # Dataset parameters
     dataset_path = config.dataset.dataset_dir
@@ -75,12 +74,9 @@ def main(config, seed=None, embedding="bert-mix"):
     val_file_path = config.dataset.rel_val_path
     test_file_path = config.dataset.rel_test_path
 
-    setattr(config.model, "embedding_type", embedding)
-
-    cudnn.benchmark = False  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
-
+    setattr(config.model, "embedding_type", embedding)  # Add embedding type to model config
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    setattr(config.model, "device", device)
+    setattr(config.model, "device", device)  # Add device to model config
 
     print("Checkpoints will be saved in: %s" % save_checkpoint_path, flush=True)
 
@@ -90,15 +86,23 @@ def main(config, seed=None, embedding="bert-mix"):
         import flair
         from flair.datasets import CSVClassificationDataset
         print(f"[{embedding}] initializing dataset", flush=True)
+
+        # Initialize datasets
         train_dataset = CSVClassificationDataset(os.path.join(dataset_path, train_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
         val_dataset = CSVClassificationDataset(os.path.join(dataset_path, val_file_path), {0: "text", 1: "label"}, max_tokens_per_doc=sentence_length_cut, tokenizer=False, in_memory=False, skip_header=True)
+        
+        # Initialize data loaders
         train_loader = flair.datasets.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
         val_loader = flair.datasets.DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
+
+        # Tell training loop how to prepare embeddings
         prepare_embeddings_fn = prepare_embeddings_flair
         print(f"[{embedding}] entering training loop", flush=True)
     
     elif embedding in ["bert-base", "bert-mix", "bert-last-four", "roberta-mix"]:
         print("[" + embedding + "]" + " initializing embeddings+dataset", flush=True)
+
+        # Initialize datasets
         if embedding == "roberta-mix":
             train_dataset = RobertaTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path),
                                                sentence_length_cut=sentence_length_cut)
@@ -108,8 +112,11 @@ def main(config, seed=None, embedding="bert-mix"):
             train_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, train_file_path), sentence_length_cut=sentence_length_cut)
             val_dataset = BertTwitterDataset(csv_file=os.path.join(dataset_path, val_file_path), sentence_length_cut=sentence_length_cut)
 
+        # Initialize data loaders
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)  # should shuffle really be false? copying from the notebook
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=workers, shuffle=False)
+
+        # Tell training loop how to prepare embeddings
         prepare_embeddings_fn = eval("prepare_embeddings_" + embedding.replace("-", "_"))
         print("[" + embedding + "]" + " entering training loop", flush=True)
 
@@ -137,8 +144,9 @@ def main(config, seed=None, embedding="bert-mix"):
         embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
     elif hasattr(model, "embedder"):
         print("Model has built-in embedder, using it", flush=True)
-        embedder = model.embedder
+        embedder = model.embedder  # Use embedder inside the model, this allows saving it (e.g. in case it is fine-tuned)
     else:
+        # Use embedder from outside the model
         print("Using user-defined embedder", flush=True)
 
     # Loss functions
@@ -147,11 +155,6 @@ def main(config, seed=None, embedding="bert-mix"):
     # Move to device
     model = model.to(device)
     criterion = criterion.to(device)
-
-    # Initial eval
-    # print("Initial evaluation:")
-    # test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
-    # test(val_loader, model, criterion, optimizer, 0, device, config, writer, prepare_embeddings_fn, embedder)
 
     # Epochs
     train_start_time = time.time()
@@ -172,23 +175,19 @@ def main(config, seed=None, embedding="bert-mix"):
         # Decay learning rate every epoch
         adjust_learning_rate(optimizer, lr_decay)
 
-        # Save checkpoint
+        # Save checkpoint and perform validation
         if epoch % save_checkpoint_freq_epoch == 0:
             save_checkpoint(epoch, model, optimizer, save_checkpoint_path)
             if not train_without_val:
-                test(val_loader, model, criterion, optimizer, epoch, device, config, writer, prepare_embeddings_fn,
-                     embedder)
-                # test(val_loader, model, criterion, device, config, writer, epoch, prepare_embeddings_fn, embedder)
+                test(val_loader, model, criterion, epoch, device, config, writer, prepare_embeddings_fn, embedder)
         epoch_end = time.time()
-        print("per epoch time = {}".format(epoch_end-epoch_start))
-        sys.stdout.flush()
+        print("Per epoch time = {}".format(epoch_end-epoch_start), flush=True)
 
     train_end_time = time.time()
-    print("Total training time: {} minutes".format((train_end_time-train_start_time)/60.0))
+    print("Total training time: {} minutes".format((train_end_time-train_start_time)/60.0), flush=True)
 
-    print("Final evaluation:")
-    test(val_loader, model, criterion, optimizer, epoch, device, config, writer, prepare_embeddings_fn, embedder)
-    # test(val_loader, model, criterion, device, config, writer, epoch, embedder)
+    print("Final evaluation:", flush=True)
+    test(val_loader, model, criterion, epoch, device, config, writer, prepare_embeddings_fn, embedder)
     writer.close()
 
 
@@ -201,6 +200,12 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     :param criterion: cross entropy loss layer
     :param optimizer: optimizer
     :param epoch: epoch number
+    :param device: device on which to perform training
+    :param config: config dict read in from JSON
+    :param tf_writer: TensorBoard writer for logging
+    :param prepare_embeddings_fn: function to perform embedding that should take the following arguments (1) data as returned by data loader,
+        (2) embedder to use for performing embedding, (3) device on which to perform embedding, (4) params (config is passed here)
+    :param embedder: embedder to use for embedding, passed to prepare_embeddings_fn
     """
     model.train()  # training mode enables dropout
 
@@ -213,13 +218,14 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
     # Batches
     for i, data in enumerate(train_loader):
 
-        # Perform embedding + padding
+        # Perform embedding + padding if necessary
         embeddings, labels = prepare_embeddings_fn(data, embedder, device, config)
         data_time.update(time.time() - start)
 
         # Forward prop.
         output = model(embeddings)
 
+        # Regularization on embedding weights -- not all models support this
         if config.model.use_regularization == "none":
             loss = criterion(output["logits"].to(device), labels)
         elif config.model.use_regularization == "l1":
@@ -263,13 +269,15 @@ def train(train_loader, model, criterion, optimizer, epoch, device, config, tf_w
                                                                   batch_time=batch_time,
                                                                   data_time=data_time, loss=losses,
                                                                   acc=accs), flush=True)
+
+        # Delete embeddings from flair, somehow it runs out of memory otherwise
         try:
             for sentence in data:
                 sentence.clear_embeddings()
         except:
             pass
 
-    # ...log the running loss, accuracy
+    # Log the running loss, accuracy
     tf_writer.add_scalar('training loss (avg. epoch)', losses.avg, epoch)
     tf_writer.add_scalar('training accuracy (avg. epoch)', accs.avg, epoch)
     tf_writer.add_scalar('learning rate', optimizer.param_groups[0]['lr'], epoch)

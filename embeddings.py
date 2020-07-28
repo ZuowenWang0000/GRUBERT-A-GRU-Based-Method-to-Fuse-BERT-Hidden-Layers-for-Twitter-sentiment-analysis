@@ -2,6 +2,13 @@ import torch
 import numpy as np
 
 def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
+    """
+    Initializes embeddings for a given embedding string (see README for a list of supported embeddings)
+    :param embedding: string indicating the embedding
+    :param device: device on which to initialize embedding
+    :param fine_tune_embeddings: whether fine-tuning should be enabled (note: this param should only be true
+        if calling initialize_embeddings from inside a model)
+    """
     if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
         import flair
         from flair.datasets import CSVClassificationDataset
@@ -43,8 +50,16 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
 
 
 def prepare_embeddings_flair(sentences, embedder, device, params):
-    embedder.embed(sentences)
+    """
+    Performs embedding for embeddings provided by the Flair NLP library.
+    :param sentences: sentences returned by Flair data loader
+    :param embedder: embedder to perform embedding with
+    :param device: device on which to perform embedding
+    :param params: config
+    """
+    embedder.embed(sentences)  # Perform embedding
 
+    # Perform zero-padding up to the max sentence length in the batch
     lengths = [len(sentence.tokens) for sentence in sentences]
     longest_token_sequence_in_batch: int = max(lengths)
     pre_allocated_zero_tensor = torch.zeros(
@@ -60,38 +75,66 @@ def prepare_embeddings_flair(sentences, embedder, device, params):
             t = pre_allocated_zero_tensor[:embedder.embedding_length * nb_padding_tokens]
             all_embs.append(t)
     embeddings = torch.cat(all_embs).view([len(sentences), longest_token_sequence_in_batch, embedder.embedding_length])
+
+    # Get labels
     labels = torch.as_tensor(np.array([int(s.labels[0].value) for s in sentences]))
+
     return embeddings.to(device), labels.to(device)
 
 
 def prepare_embeddings_bert_mix(data, embedder, device, params):
+    """
+    Performs embedding for embeddings provided by the Flair NLP library.
+    :param data: data returned by data loader
+    :param embedder: embedder to perform embedding with
+    :param device: device on which to perform embedding
+    :param params: config
+    """
     x = data["text"]
     labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
+    embeddings = embedder(input_ids=x.to(device))  # Perform embedding
     labels = labels.to(device)
+
+    # Calculate how many BERT hidden layers each GRU is combining
     num_combined_per_gru = int(12 / params.model.num_grus)
+
+    # Concatenate the BERT hidden layers accordingly
     h = [torch.cat(embeddings[2][i*num_combined_per_gru+1 : (i+1)*num_combined_per_gru+1], 2) for i in range(params.model.num_grus)]
     return h, labels
 
 
 def prepare_embeddings_roberta_mix(data, embedder, device, params):
+    # Exactly the same as for BERT, provided for convenience
     return prepare_embeddings_bert_mix(data, embedder, device, params)
 
 
 def prepare_embeddings_bert_base(data, embedder, device, params):
+    """
+    Performs embedding for embeddings provided by the Flair NLP library.
+    :param data: data returned by data loader
+    :param embedder: embedder to perform embedding with
+    :param device: device on which to perform embedding
+    :param params: config
+    """
     x = data["text"]
     labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
+    embeddings = embedder(input_ids=x.to(device))  # Perform embedding
     labels = labels.to(device)
-    # h2 = torch.cat(embeddings[2][12], 2)
-    h2 = embeddings[2][12]
+    h2 = embeddings[2][12]  # Get the last layer of the BERT model
     return [h2], labels
 
 
 def prepare_embeddings_bert_last_four(data, embedder, device, params):
+    """
+    Performs embedding for embeddings provided by the Flair NLP library.
+    :param data: data returned by data loader
+    :param embedder: embedder to perform embedding with
+    :param device: device on which to perform embedding
+    :param params: config
+    """
     x = data["text"]
     labels = data["label"]
-    embeddings = embedder(input_ids=x.to(device))
+    embeddings = embedder(input_ids=x.to(device))  # Perform embedding
     labels = labels.to(device)
-    h2 = torch.cat(embeddings[2][9:13], 2)
+    h2 = torch.cat(embeddings[2][9:13], 2)  # Concatenate the last 4 layers of the BERT model
     return [h2], labels

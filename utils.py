@@ -49,10 +49,7 @@ def save_checkpoint(epoch, model, optimizer, save_checkpoint_path):
     :param epoch: epoch number
     :param model: model
     :param optimizer: optimizer
-    :param best_acc: best accuracy achieved so far (not necessarily in this checkpoint)
-    :param word_map: word map
-    :param epochs_since_improvement: number of epochs since last improvement
-    :param is_best: is this checkpoint the best so far?
+    :param save_checkpoint_path: path where to save the checkpoint
     """
     state = {'epoch': epoch,
              'model': model,
@@ -76,6 +73,10 @@ def clip_gradient(optimizer, grad_clip):
 
 
 def get_config(config_path):
+    """
+    Gets the config from a given path.
+    :param config_path: the path to load the config from
+    """
     with open(config_path) as config_file:
         config = json.load(config_file)
 
@@ -83,6 +84,10 @@ def get_config(config_path):
 
 
 class AttrDict(dict):
+    """
+    Small class to allow accessing a dict in dot notation (e.g. my_dict.property instead of my_dict["property"]).
+    Dicts can be cast to this class, e.g. attr_dict = AttrDict(my_dict)
+    """
     def __getattr__(self, name):
         return self[name]
 
@@ -91,6 +96,10 @@ class AttrDict(dict):
 
 
 def config_to_namedtuple(obj):
+    """
+    Converts a JSON file in Python dict format to an AttrDict that can be accessed using dot notation.
+    :param obj: a JSON dict to be converted to an AttrDict.
+    """
     if isinstance(obj, dict):
         for key, value in obj.items():
             obj[key] = config_to_namedtuple(value)
@@ -100,28 +109,3 @@ def config_to_namedtuple(obj):
         return [config_to_namedtuple(item) for item in obj]
     else:
         return obj
-
-def get_config_list(config_list):
-  return tuple(config_list)
-
-
-def log_to_file(logfile, str):
-    with open(logfile, "a") as f:
-        f.write(str)
-        f.flush()
-
-
-def concatenate_json_files(file_list, filename_metafile):
-    if not os.path.isfile(filename_metafile):
-        global_dict = {}
-    else:
-        with open(filename_metafile, 'r') as f:
-            global_dict = json.load(f)
-    for file in file_list:
-        with open(file, 'r') as f:
-            experiments_f = json.load(f)
-            for key, value in experiments_f.items():
-                global_dict[key] = value
-
-    with open(filename_metafile, 'w') as f:
-        json.dump(global_dict, f, indent=2, sort_keys=True)

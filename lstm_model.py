@@ -1,8 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from embeddings import initialize_embeddings
 
 class LstmModel(nn.Module):
+    """
+    Simple model that uses an LSTM to perform document embedding of a tweet, 
+    then uses a linear layer for classification.
+    """
     def __init__(self, n_classes, model_config):
         super().__init__()
         self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)

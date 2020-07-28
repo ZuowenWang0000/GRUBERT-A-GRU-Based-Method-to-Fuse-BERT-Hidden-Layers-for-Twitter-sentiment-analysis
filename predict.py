@@ -30,6 +30,7 @@ def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
         results = np.concatenate((results, predictions.cpu().numpy()))
         print(i)
 
+        # Clear embeddings to save memory
         try:
             for sentence in data:
                 sentence.clear_embeddings()
@@ -39,10 +40,10 @@ def predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
 
 
 @click.command()
-@click.option('--config', default='specify_config_using_--config_option', type=str)
-@click.option('--checkpoint', default='specify_checkpoint_using_--checkpoint_option', type=str)
-@click.option('--predict-file', default='./prediction', type=str)
-@click.option('--embedding', default='specify_embedding_using_--embedding_option', type=str)
+@click.option('-c', '--config', required=True, type=str)
+@click.option('-p', '--checkpoint', required=True, type=str)
+@click.option('-f', '--predict-file', default='./prediction', type=str)
+@click.option('-e', '--embedding', required=True, type=str)
 
 
 def main_cli(config, checkpoint, predict_file, embedding):
@@ -50,15 +51,15 @@ def main_cli(config, checkpoint, predict_file, embedding):
     config_dict = get_config(config)
     config = config_to_namedtuple(config_dict)
 
-    batch_size = 8
-    dataset_path = config.dataset.dataset_dir
-    test_file_path = config.dataset.rel_test_path
-    sentence_length_cut = config.model.sentence_length_cut #set fixed sentence length
+    batch_size = 8  # Fixed batch size to avoid out of memory errors in all cases
+    dataset_path = config.dataset.dataset_dir  # path of datset
+    test_file_path = config.dataset.rel_test_path  # path of test file
+    sentence_length_cut = config.model.sentence_length_cut  # set fixed sentence length
     workers = config.training.workers  # number of workers for loading data in the DataLoader
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # setup embeddings
-    
-    embedder = initialize_embeddings(embedding, device, fine_tune_embeddings=False)
+    embedder = None
     if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
         import flair
         from flair.datasets import CSVClassificationDataset
@@ -84,14 +85,19 @@ def main_cli(config, checkpoint, predict_file, embedding):
 
     checkpoint = torch.load(checkpoint)
     model = checkpoint['model']
-    if hasattr(model, "embedder"):
+    if embedding == "elmo":  # can't save elmo embedder somehow, so have to use it outside the model
+        print("Using elmo, overriding model embedder", flush=True)
+        model.embedder = None
+        embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
+    elif hasattr(model, "embedder"):
         print("Model has built-in embedder, using it", flush=True)
-        embedder = model.embedder
+        embedder = model.embedder  # Use embedder inside the model, this allows saving it (e.g. in case it is fine-tuned)
     else:
+        # Use embedder from outside the model
         print("Using user-defined embedder", flush=True)
 
     results = predict(eval_loader, model, device, config, prepare_embeddings_fn, embedder)
-    results = ((results-0.5)*2)
+    results = ((results-0.5)*2)  # Convert labels to {-1, 1} instead of {0, 1}
     sub = pd.read_csv("./sample_submission.csv", index_col=False)
     sub["Prediction"] = results.astype(int)
     sub.to_csv(predict_file, index=False)

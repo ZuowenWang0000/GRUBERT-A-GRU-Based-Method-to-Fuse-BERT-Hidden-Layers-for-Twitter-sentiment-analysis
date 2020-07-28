@@ -6,7 +6,7 @@ from utils import *
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 
-def test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
+def test(eval_loader, model, criterion, epoch, device, config, tf_writer, prepare_embeddings_fn, embedder):
     """
     Performs one epoch's validation.
 
@@ -15,6 +15,11 @@ def test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_wri
     :param criterion: cross entropy loss layer
     :param optimizer: optimizer
     :param epoch: epoch number
+    :param device: device on which to perform validation
+    :param config: JSON config
+    :param tf_write: TensorBoard writer for logging
+    :param prepare_embeddings_fn: see param prepare_embeddings_fn for function train()
+    :param embedder: embedder to perform embedding, passed to prepare_embeddings_fn
     """
 
     model.eval()  # eval mode disables dropout
@@ -31,6 +36,7 @@ def test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_wri
         # Forward prop.
         output = model(embeddings)
 
+        # Perform regularization on embedding weights -- not all models support this
         if config.model.use_regularization == "none":
             loss = criterion(output["logits"].to(device), labels)
         elif config.model.use_regularization == "l1":
@@ -61,6 +67,6 @@ def test(eval_loader, model, criterion, optimizer, epoch, device, config, tf_wri
                   'Eval Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Eval Accuracy {acc.val:.3f} ({acc.avg:.3f})'.format(loss=losses, acc=accs), flush=True)
 
-    # ...log the running loss, accuracy
+    # Log the running loss, accuracy
     tf_writer.add_scalar('test loss (avg. epoch)', losses.avg, epoch)
     tf_writer.add_scalar('test accuracy (avg. epoch)', accs.avg, epoch)
