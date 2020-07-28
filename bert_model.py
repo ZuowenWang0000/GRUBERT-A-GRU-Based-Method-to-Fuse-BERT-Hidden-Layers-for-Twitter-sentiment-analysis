@@ -9,7 +9,7 @@ def _get_bert_embedder(embedding_type):
     elif embedding_type == "roberta-mix":
         return RobertaModel.from_pretrained('roberta-base', output_hidden_states=True)
     else:
-        raise NotImplementedError(f"Unsupported embedding for bert-based model: {model_config.embedding_type}")
+        raise NotImplementedError(f"Unsupported embedding for bert-based model: {embedding_type}")
 
 
 class BertMixModel(nn.Module):
