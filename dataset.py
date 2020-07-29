@@ -23,8 +23,7 @@ class AbstractBertTwitterDataset(Dataset):
         self.tweets = self.tweet_data_frame['text']
         self.labels = self.tweet_data_frame['label']
         self.tweet_list = self.sentences_from_df()
-        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list, self.tokenizer, max_seq_len=sentence_length_cut))
-
+        self.tokenized_tweets = None
 
     def __len__(self):
         return len(self.tweet_data_frame)
@@ -75,6 +74,7 @@ class BertTwitterDataset(AbstractBertTwitterDataset):
         """
         super(BertTwitterDataset, self).__init__(csv_file=csv_file, transform=transform, sentence_length_cut=sentence_length_cut)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list, self.tokenizer, max_seq_len=sentence_length_cut))
 
 
 class RobertaTwitterDataset(AbstractBertTwitterDataset):
@@ -89,3 +89,4 @@ class RobertaTwitterDataset(AbstractBertTwitterDataset):
         """
         super(RobertaTwitterDataset, self).__init__(csv_file=csv_file, transform=transform, sentence_length_cut=sentence_length_cut)
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.tokenized_tweets = torch.LongTensor(self.tokenize_sentences(self.tweet_list, self.tokenizer, max_seq_len=sentence_length_cut))
