@@ -28,7 +28,7 @@ to install the dependencies needed. Virtual environment is recommended.
 Download the tweet datasets from [here](https://polybox.ethz.ch/index.php/s/Tb0QWEKEK9Bhiqy?path=%2Fdataset%2Ffinal_dataset).
 
 This link contains a train split, a validation split and a test split (label unknown). The train and validation splits are created by spliting the original training set provided by the ETH CIL course team.
-These datasets are preprocessed using the same preprocessing procedure described in the report (section?).
+These datasets are preprocessed using the same preprocessing procedure described in the report Section 2.1.
 
 # Training
 For Leonhard users please execute train.sh with flags:
