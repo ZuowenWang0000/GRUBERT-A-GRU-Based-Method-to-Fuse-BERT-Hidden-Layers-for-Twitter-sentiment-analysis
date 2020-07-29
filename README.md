@@ -1,12 +1,13 @@
 # Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Preparations](#preparations)
-  * [Dependencies](#dependencies)
-  * [Dataset](#dataset)
+  - [Dependencies](#dependencies)
+  - [Dataset](#dataset)
 - [Training](#training)
-  * [Available models and embeddings](#available-models-and-embeddings)
-    + [Compatible Flair-based embeddings](#compatible-flair-based-embeddings)
+  - [Available models and embeddings](#available-models-and-embeddings)
+    - [Compatible Flair-based embeddings](#compatible-flair-based-embeddings)
       - [Additional embedding files required for GloVe and SynGCN](#additional-embedding-files-required-for-glove-and-syngcn)
-    + [Compatible transformers-based embeddings](#compatible-transformers-based-embeddings)
+    - [Compatible transformers-based embeddings](#compatible-transformers-based-embeddings)
 - [Prediction](#prediction)
 - [Configuration Files](#configuration-files)
 
@@ -50,19 +51,23 @@ There are two classes of models: models that operate on bert-based embeddings fr
 ### Compatible Flair-based embeddings
 GloVe and SynGCN embeddings require additional files to be present in the `./embeddings` directory (see the next section)
 
-- `flair`: Uses a mix of GloVe, SynGCN, and Flair forward and backward embeddings 
-- `elmo`: Uses a mix of GloVe, SynGCN, and ELMo embeddings
-- `bert`: Uses a mix of GloVe, SynGCN, and BERT embeddings
-- `glove-only`: Uses GloVe embeddings
-- `syngcn-only`: Uses SynGCN embeddings
-- `glove-syngcn`: Uses a mix of GloVe and SynGCN embeddings
-- `twitter-only`: Uses Twitter embeddings from Flair
+- `flair`: Uses Flair forward and backward embeddings 
+- `gs-flair`: Uses a mix of GloVe, SynGCN, and Flair forward and backward embeddings 
+- `elmo`: Uses ELMo embeddings
+- `gs-elmo`: Uses a mix of GloVe, SynGCN, and ELMo embeddings
+- `gs-bert`: Uses a mix of GloVe, SynGCN, and BERT embeddings
+- `glove`: Uses GloVe embeddings
+- `syngcn`: Uses SynGCN embeddings
+- `gs-only`: Uses a mix of GloVe and SynGCN embeddings
+- `twitter`: Uses Twitter embeddings from Flair
 
 #### Additional embedding files required for GloVe and SynGCN
 
 These are available for download [here](https://polybox.ethz.ch/index.php/s/Tb0QWEKEK9Bhiqy?path=%2Fembeddings) and should be placed into the `./embeddings` directory.
 
 ### Compatible transformers-based embeddings
+- `bert-base`: Uses the last BERT hidden layer
+- `bert-last-four`: Uses a concatenation of the last 4 BERT hidden layers
 - `bert-mix`: Uses BERT embeddings, exposing all 12 hidden layers
 - `roberta-mix`: Uses Roberta embeddings, exposing all 12 hidden layers
 
