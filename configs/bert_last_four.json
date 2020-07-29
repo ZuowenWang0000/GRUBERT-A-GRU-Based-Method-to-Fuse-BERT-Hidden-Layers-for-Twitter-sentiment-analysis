@@ -18,7 +18,7 @@
         "lr_decay": 0.9,
         "momentum": 0.9,
         "workers": 8,
-        "epochs": 30,
+        "epochs": 15,
         "grad_clip": "none",
         "print_freq": 250,
         "checkpoint": "none",
