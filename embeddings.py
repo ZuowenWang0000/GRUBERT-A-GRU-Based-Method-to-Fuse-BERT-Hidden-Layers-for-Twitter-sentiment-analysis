@@ -9,42 +9,59 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
     :param fine_tune_embeddings: whether fine-tuning should be enabled (note: this param should only be true
         if calling initialize_embeddings from inside a model)
     """
-    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
+    if embedding in ["flair", "bert", "elmo", "elmo-only", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
-        glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
-        syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
-        embeddings_list = [glove_embedding, syngcn_embedding]
-        # embedding_list = []
 
-        if embedding == "flair":
-            print("[flair] initializing Flair embeddings", flush=True)
+        if embedding.startswith("gs-"):
+            glove_embedding = WordEmbeddings("../embeddings/glove.6B.300d.gensim")
+            syngcn_embedding = WordEmbeddings("../embeddings/syngcn.gensim")
+            embeddings_list = [glove_embedding, syngcn_embedding]
+
+        if embedding == "gs-flair":
+            print("[flair] initializing GS-Flair embeddings", flush=True)
             embeddings_list += [FlairEmbeddings("mix-forward", chars_per_chunk=128, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=128, fine_tune=fine_tune_embeddings)]
-        elif embedding == "bert":
-            print("[flair] initializing Bert embeddings", flush=True)
+        elif embedding == "flair":
+            print("[flair] initializing Flair embeddings", flush=True)
+            embeddings_list = [FlairEmbeddings("mix-forward", chars_per_chunk=128, fine_tune=fine_tune_embeddings), FlairEmbeddings("mix-backward", chars_per_chunk=128, fine_tune=fine_tune_embeddings)]
+        elif embedding == "gs-bert":
+            print("[flair] initializing GS-Bert embeddings", flush=True)
             embeddings_list += [TransformerWordEmbeddings('bert-base-uncased', layers='-1', fine_tune=fine_tune_embeddings)]
-        elif embedding == "elmo":
+        elif embedding == "gs-elmo":
             print("[flair] initializing ELMo embeddings", flush=True)
             embeddings_list += [ELMoEmbeddings(model="original", embedding_mode="top")]
-        elif embedding == "glove-only":
-            print("[flair] initializing Glove only embedding", flush=True)
-            embeddings_list = [glove_embedding]
-        elif embedding == "syngcn-only":
-            print("[flair] initializing synGCN only embedding", flush=True)
-            embeddings_list = [syngcn_embedding]
-        elif embedding == "twitter-only":
-            print("[flair] initializing twitter only embedding", flush=True)
+        elif embedding == "elmo":
+            print("[flair] initializing ELMo embeddings", flush=True)
+            embeddings_list = [ELMoEmbeddings(model="original", embedding_mode="top")]
+        elif embedding == "glove":
+            print("[flair] initializing Glove embeddings", flush=True)
+            embeddings_list = [WordEmbeddings("../embeddings/glove.6B.300d.gensim")]
+        elif embedding == "syngcn":
+            print("[flair] initializing SynGCN only embeddings", flush=True)
+            embeddings_list = [WordEmbeddings("../embeddings/syngcn.gensim")]
+        elif embedding == "twitter":
+            print("[flair] initializing twitter only embeddings", flush=True)
             embeddings_list = [WordEmbeddings("en-twitter")]
-        elif embedding == "glove-syngcn":
-            print("[flair] initializing synGCN only embedding", flush=True)
+        elif embedding == "gs-only":
+            print("[flair] initializing Glove + SynGCN only embeddings", flush=True)
             embeddings_list = [glove_embedding, syngcn_embedding]
 
         return StackedEmbeddings(embeddings=embeddings_list).to(device)
     
-    elif embedding in ["bert-mix", "bert-base", "bert-last-four", "roberta-mix"]:
-        return None
-
+    elif embedding in ["bert-mix", "bert-base", "bert-last-four"]:
+        from transformers import BertModel
+        embedder = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+        for param in embedder.parameters():
+            param.requires_grad = fine_tune_embeddings
+        return embedder
+    elif embedding in ["roberta-mix"]:
+        from transformers import RobertaModel
+        embedder = RobertaModel.from_pretrained('roberta-base', output_hidden_states=True)
+        for param in embedder.parameters():
+            param.requires_grad = fine_tune_embeddings
+        return embedder
+    
     else:
         raise NotImplementedError("Unsupported embedding: " + embedding)
 

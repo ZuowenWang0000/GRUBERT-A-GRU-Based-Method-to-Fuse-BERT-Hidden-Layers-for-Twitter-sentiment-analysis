@@ -2,15 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertModel, RobertaModel
-
-# Gets the appropriate BERT embedder given a string
-def _get_bert_embedder(embedding_type):
-    if embedding_type == "bert-mix":
-        return BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
-    elif embedding_type == "roberta-mix":
-        return RobertaModel.from_pretrained('roberta-base', output_hidden_states=True)
-    else:
-        raise NotImplementedError(f"Unsupported embedding for bert-based model: {embedding_type}")
+from embeddings import initialize_embeddings
 
 
 class BertMixModel(nn.Module):
@@ -23,7 +15,7 @@ class BertMixModel(nn.Module):
         self.device = model_config.device
 
         # Initialize embedder for use by training loop
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.num_grus = model_config.num_grus
@@ -48,10 +40,6 @@ class BertMixModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer,nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        # Enable/disable fine-tuning in accordance with the config
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings # todo: replace this by fine_tune？ ZUOWEN
     
     def forward(self, embeddings):
         # Assumes that embeddings have already been computed by the training loop
@@ -78,7 +66,7 @@ class BertBaseModel(nn.Module):
         super().__init__()
         self.device = model_config.device
 
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.gru1 = nn.GRU(768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
@@ -94,9 +82,6 @@ class BertBaseModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         layer = embeddings[0]
@@ -120,7 +105,7 @@ class BertLastFourModel(nn.Module):
         super().__init__()
         self.device = model_config.device
 
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.gru1 = nn.GRU(4*768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
@@ -136,9 +121,6 @@ class BertLastFourModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer]
@@ -163,7 +145,7 @@ class BertWSModel(nn.Module):
         super().__init__()
         self.device = model_config.device
 
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.num_grus = model_config.num_grus
@@ -183,9 +165,6 @@ class BertWSModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         temp = [embeddings[i].to(self.device).permute(1, 0, 2) for i in range(self.num_grus)]
@@ -208,7 +187,7 @@ class BertMixLinearModel(nn.Module):
         super().__init__()
         self.device = model_config.device
 
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.linear = nn.Linear(4 * 768, 2 * model_config.gru_hidden_size)
@@ -225,9 +204,6 @@ class BertMixLinearModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer14, layer58, layer912]
@@ -259,7 +235,7 @@ class BertMixLSTMModel(nn.Module):
         super().__init__()
         self.device = model_config.device
 
-        self.embedder = _get_bert_embedder(model_config.embedding_type)
+        self.embedder = initialize_embeddings(model_config.embedding_type, model_config.device, fine_tune_embeddings=model_config.fine_tune_embeddings)
         self.embedder = self.embedder.to(self.device)
 
         self.lstm = nn.LSTM(4 * 768, model_config.gru_hidden_size, num_layers=model_config.num_gru_layers,
@@ -275,9 +251,6 @@ class BertMixLSTMModel(nn.Module):
         for layer in self.classifier:
             if (isinstance(layer, nn.Linear)):
                 torch.nn.init.xavier_normal_(layer.weight)
-
-        for param in self.embedder.parameters():
-            param.requires_grad = model_config.fine_tune_embeddings  # todo: replace this by fine_tune？ ZUOWEN
 
     def forward(self, embeddings):
         # embeddings = [layer14, layer58, layer912]
