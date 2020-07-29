@@ -85,7 +85,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
 
     checkpoint = torch.load(checkpoint)
     model = checkpoint['model']
-    if embedding.startswith("elmo"):  # can't save elmo embedder somehow, so have to use it outside the model
+    if "elmo" in embedding:  # can't save elmo embedder somehow, so have to use it outside the model
         print("Using elmo, overriding model embedder", flush=True)
         model.embedder = None
         embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)

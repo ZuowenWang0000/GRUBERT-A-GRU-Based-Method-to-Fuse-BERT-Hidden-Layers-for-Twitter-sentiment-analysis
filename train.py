@@ -138,7 +138,7 @@ def main(config, seed=None, embedding="bert-mix"):
         print("Instantiated new model", flush=True)
         optimizer = optim.Adam(params=filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
     
-    if embedding.startswith("elmo"):  # can't save elmo embedder somehow, so have to use it outside the model
+    if "elmo" in embedding:  # can't save elmo embedder somehow, so have to use it outside the model
         print("Using elmo, overriding model embedder", flush=True)
         model.embedder = None
         embedder = initialize_embeddings("elmo", device, fine_tune_embeddings=False)
