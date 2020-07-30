@@ -1,7 +1,3 @@
-
-## Big files of our CIL project
-https://polybox.ethz.ch/index.php/s/Tb0QWEKEK9Bhiqy
-=======
 # Table of Contents
 - [Table of Contents](#table-of-contents)
 - [Preparations](#preparations)
@@ -17,7 +13,6 @@ https://polybox.ethz.ch/index.php/s/Tb0QWEKEK9Bhiqy
 
 # Preparations
 
-
 ## Dependencies 
 For Leonhard users, to install dependencies, please first execute
 ```
@@ -30,13 +25,8 @@ pip3 install --user -r requirements.txt
 ```
 to install the dependencies needed. Virtual environment is recommended.
 
-<<<<<<< HEAD
-Download the tweet datasets from here:
-https://polybox.ethz.ch/index.php/s/pp6Mzg7BwcXVG5z
-=======
 ## Dataset
 Download the tweet datasets from [here](https://polybox.ethz.ch/index.php/s/Tb0QWEKEK9Bhiqy?path=%2Fdataset%2Ffinal_dataset).
-
 
 This link contains a train split, a validation split and a test split (label unknown). The train and validation splits are created by spliting the original training set provided by the ETH CIL course team.
 These datasets are preprocessed using the same preprocessing procedure described in the report Section 2.1.
@@ -47,14 +37,7 @@ For Leonhard users please execute train.sh with flags:
 ./train.sh --config configs/the_experiment_config_file.json --embedding <embedding>
 ```
 
-<<<<<<< HEAD
-- vocab.txt vocab.pkl vocab_cut.txt
-- cooc.pkl: cooccurance matrix 
-
-## Build the Co-occurence Matrix (already in datasets but feel free to rerun)
-=======
 For non-Leonhard users please execute the python train.py script. Flags are the same as on Leonhard and can be viewed using `python train.py --help`
->>>>>>> c326bebd1b69cd16f0b8ca8fd1c57140217ebe62
 
 
 an example for a quick start on Leonhard:
@@ -140,22 +123,5 @@ A typical configuration file to control the model type, model parameter and expe
 ```
 
 
-<<<<<<< HEAD
-##  Template for Glove Question (already in polybox embeddings)
-=======
 
-
-
-<<<<<<< HEAD
-Once you tested your system on the small set of 10% of all tweets, we suggest you run on the full datasets train_pos_full.txt, train_neg_full.txt
-
-Note: std_glove_embeddings.npz is trained with the glove_solution.py provided by the course group. We should use it in part of the baseline.
-can be downloaded from:
-https://polybox.ethz.ch/index.php/s/JQ8awPuk5tdrp5A
-
-
-##  available embedding so far
-standard glove embedding (provided by the TA group)
-https://polybox.ethz.ch/index.php/s/JQ8awPuk5tdrp5A
-=======
 
