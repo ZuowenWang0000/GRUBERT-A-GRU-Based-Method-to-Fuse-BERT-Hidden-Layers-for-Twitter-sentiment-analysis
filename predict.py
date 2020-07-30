@@ -60,7 +60,7 @@ def main_cli(config, checkpoint, predict_file, embedding):
 
     # setup embeddings
     embedder = None
-    if embedding in ["flair", "bert", "elmo", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
+    if embedding in ["gs-flair", "flair", "gs-bert", "bert", "gs-elmo", "elmo", "glove", "syngcn", "gs-only", "twitter"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         print("[flair] initializing dataset", flush=True)

@@ -9,7 +9,7 @@ def initialize_embeddings(embedding, device, fine_tune_embeddings=False):
     :param fine_tune_embeddings: whether fine-tuning should be enabled (note: this param should only be true
         if calling initialize_embeddings from inside a model)
     """
-    if embedding in ["flair", "bert", "elmo", "elmo-only", "glove-only", "syngcn-only", "glove-syngcn", "twitter-only"]:
+    if embedding in ["gs-flair", "flair", "gs-bert", "bert", "gs-elmo", "elmo", "glove", "syngcn", "gs-only", "twitter"]:
         import flair
         from flair.datasets import CSVClassificationDataset
         from flair.embeddings import WordEmbeddings, FlairEmbeddings, ELMoEmbeddings, TransformerWordEmbeddings, StackedEmbeddings
