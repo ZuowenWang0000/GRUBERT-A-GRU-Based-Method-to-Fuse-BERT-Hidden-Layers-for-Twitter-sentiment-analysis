@@ -9,6 +9,7 @@
       - [Additional embedding files required for GloVe and SynGCN](#additional-embedding-files-required-for-glove-and-syngcn)
     - [Compatible transformers-based embeddings](#compatible-transformers-based-embeddings)
 - [Prediction](#prediction)
+- [Majority Voting](#majority-voting)
 - [Configuration Files](#configuration-files)
 
 # Preparations
@@ -77,6 +78,9 @@ predict.sh script and specify the config file, checkpoint path and the file name
 ```
 ./predict.sh --config config/the_experiment_config_file.json --checkpoint_path /cluster/scratch/hoffmannthebestman/log_dir/bert_mix_seed0/checkpoint_han_2.tar --predict-file ./pred_bert_mix_s0.csv
 ```
+
+# Majority Voting
+The code for majority voting is in `maj_vote.py`. The file must be manually modified with the names of the prediction files to do majority voting on.
 
 # Configuration Files
 A typical configuration file to control the model type, model parameter and experiment environment looks as follows:
