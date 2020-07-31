@@ -98,28 +98,28 @@ The code for majority voting is in `maj_vote.py`. The file must be manually modi
 # Configuration Files
 A typical configuration file to control the model type, model parameter and experiment environment looks as follows:
 
-```json
+```
 {
-    "model": {                              #NOTE: model parameters differ according to the model;
-                                                  this is an example for a BertMixModel config
+    "model": {                                                      #NOTE: model parameters differ according to the model;
+                                                                                 this is an example for a BertMixModel config
         "architecture": "BertMixModel",     #other options: see previous section
-        "n_classes": 2,                     #number of classes for prediction (here, just positive and negative)
-        "gru_hidden_size": 100,             #the number of hidden units in each GRU used in the model
-        "num_gru_layers": 1,                #the number of layer in each GRU used in the model.
-        "num_grus": 3,                      #the number of GRUs used to fuse the bert layers. 
-                                             Refer to Section 2.2 for more details.
-        "linear_hidden_size": 100,          #the number of hidden units for the linear classifier layer 
+        "n_classes": 2,                                        #number of classes for prediction (here, just positive and negative)
+        "gru_hidden_size": 100,                     #the number of hidden units in each GRU used in the model
+        "num_gru_layers": 1,                          #the number of layer in each GRU used in the model.
+        "num_grus": 3,                                       #the number of GRUs used to fuse the bert layers. 
+                                                                                Refer to Section 2.2 for more details.
+        "linear_hidden_size": 100,                #the number of hidden units for the linear classifier layer 
         "dropout": 0.5, 
-        "fine_tune_embeddings": true,       #to reveal the true power of bert, fine-tune need to be enabled
+        "fine_tune_embeddings": true,      #to reveal the true power of bert, fine-tune need to be enabled
         "sentence_length_cut": 40, 
-        "use_regularization": "none",       #used in pre-study experiments, not in final report
-        "regularization_lambda": 0          #used in pre-study experiments, not in final report
+        "use_regularization": "none",          #used in pre-study experiments, not in final report
+        "regularization_lambda": 0              #used in pre-study experiments, not in final report
     },
     "training": {
-        "start_epoch": 0,                   #the starting epoch, only used for continue training, otw set to 0
+        "start_epoch": 0,                                   #the starting epoch, only used for continue training, otw set to 0
         "batch_size": 64,  
         "lr": 1e-5,
-        "lr_decay": 0.9,                    #the learning rate decays to previous learning rate * lr_decay in each epoch
+        "lr_decay": 0.9,                                       #the learning rate decays to previous learning rate * lr_decay in each epoch
         "momentum": 0.9,
         "workers": 0, 
         "epochs": 30,
@@ -134,7 +134,7 @@ A typical configuration file to control the model type, model parameter and expe
         "weight_decay":0.0
     },
     "dataset": {
-        "dataset_dir": "../dataset",         #the dataset folder (which includes train, validation and test files)
+        "dataset_dir": "../dataset",               #the dataset folder (which includes train, validation and test files)
         "rel_train_path": "train_split.csv",
         "rel_val_path": "val_split.csv",
         "rel_test_path": "test_cleaned.csv"
