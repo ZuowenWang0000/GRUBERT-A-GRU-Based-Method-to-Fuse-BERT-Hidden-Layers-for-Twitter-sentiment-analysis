@@ -35,6 +35,8 @@ The datapath is controlled by configuration files in the config folder.
 The train and validation splits are created by spliting the original training set provided by the ETH CIL course team.
 These datasets are preprocessed using the same preprocessing procedure described in the report Section 2.1.
 
+The scripts for preprocessing can be found in the `preprocessing` directory. `preprocess.py` performs spell-checking, emoji, <user>, and <url> replacement, duplicate tweet removal, and extraneous whitespace removal. Then, `preprocess2.py` removes tweets that consist solely of whitespace.
+
 # Training
 For Leonhard users please execute train.sh with flags:
 ```
