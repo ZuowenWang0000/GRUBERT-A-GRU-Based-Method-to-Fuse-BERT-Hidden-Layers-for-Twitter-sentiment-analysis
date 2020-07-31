@@ -30,8 +30,8 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.backends.cudnn as cudnn
 
 from lstm_model import LstmModel
-from bert_model import BertMixModel, BertBaseModel, BertWSModel, BertSentimentModel, BertLastFourModel, BertMixLinearModel, \
-    BertMixLSTMModel, RobertaSentimentModel, RobertaWSModel
+from bert_model import BertMixModel, BertBaseModel, BertWSModel,  BertLastFourModel, BertMixLinearModel, \
+    BertMixLSTMModel
 from flair_model import GSFlairMixModel
 from dataset import BertTwitterDataset, RobertaTwitterDataset
 from utils import *
