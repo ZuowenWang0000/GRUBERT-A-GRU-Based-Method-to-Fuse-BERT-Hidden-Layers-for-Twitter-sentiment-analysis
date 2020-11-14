@@ -1,10 +1,12 @@
+<img align="right" width="200" src="https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png">
+
 # Table of Contents
-- [Table of Contents](#table-of-contents)(https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png)
+- [Table of Contents](#table-of-contents)
 - [Preparations](#preparations)
   - [Dependencies](#dependencies)
   - [Dataset](#dataset)
 - [Training](#training)
-  - [Available models and embeddings](#available-models-and-embeddings)
+  - [Available models and embeddings](#available-models-and-embeddings) 
     - [Compatible transformers-based embeddings](#compatible-transformers-based-embeddings)
     - [Compatible Flair-based embeddings](#compatible-flair-based-embeddings)
       - [Additional embedding files required for GloVe and SynGCN](#additional-embedding-files-required-for-glove-and-syngcn)
