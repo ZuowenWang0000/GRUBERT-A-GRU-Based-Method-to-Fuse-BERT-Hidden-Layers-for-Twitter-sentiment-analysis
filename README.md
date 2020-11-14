@@ -1,4 +1,6 @@
-<img align="right" width="200" src="https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png">
+# GRUBERT: A GRU-Based Method to Fuse BERT Hidden Layers for Twitter sentiment analysis
+
+<img align="right" width="180" src="https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png">
 
 # Table of Contents
 - [Table of Contents](#table-of-contents)
