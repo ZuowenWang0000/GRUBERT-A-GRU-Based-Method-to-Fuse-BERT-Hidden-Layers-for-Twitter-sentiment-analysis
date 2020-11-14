@@ -1,6 +1,5 @@
-![alt text](https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png)
 # Table of Contents
-- [Table of Contents](#table-of-contents)
+- [Table of Contents](#table-of-contents)(https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png)
 - [Preparations](#preparations)
   - [Dependencies](#dependencies)
   - [Dataset](#dataset)
