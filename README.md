@@ -2,6 +2,23 @@
 
 <img align="right" width="180" src="https://github.com/ZuowenWang0000/GRUBERT-A-GRU-Based-Method-to-Fuse-BERT-Hidden-Layers-for-Twitter-sentiment-analysis/blob/master/grubert.png">
 
+If you use our code please consider citing
+```
+@inproceedings{horne-etal-2020-grubert,
+    title = "{GRUBERT}: A {GRU}-Based Method to Fuse {BERT} Hidden Layers for {T}witter Sentiment Analysis",
+    author = "Horne, Leo  and
+      Matti, Matthias  and
+      Pourjafar, Pouya  and
+      Wang, Zuowen",
+    booktitle = "Proceedings of the 1st Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 10th International Joint Conference on Natural Language Processing: Student Research Workshop",
+    month = dec,
+    year = "2020",
+    address = "Suzhou, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2020.aacl-srw.19",
+    pages = "130--138"
+}
+```
 # Table of Contents
 - [Table of Contents](#table-of-contents)
 - [Preparations](#preparations)
