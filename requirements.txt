@@ -6,6 +6,6 @@ flair==0.5
 joblib==0.14.0
 nltk==3.4.5
 pandas==0.25.1
-numpy==1.17.2
+numpy==1.22.0
 autocorrect==2.0.0
 scikit_learn==0.23.1
